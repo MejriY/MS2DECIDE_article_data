@@ -1,0 +1,96 @@
+<PumpMethod xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ModuleType="G1311B" schemaVersion="1.0.5" schemaSI="1" ModuleOptions="">
+  <ConfigurationXml>&lt;PumpConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" schemaVersion="1.0.3"&gt;&lt;DisplayName&gt;Quat. Pump&lt;/DisplayName&gt;&lt;SerialNumber&gt;DEAB704873&lt;/SerialNumber&gt;&lt;ModuleType&gt;G1311B&lt;/ModuleType&gt;&lt;ModuleDisplayType&gt;G1311B&lt;/ModuleDisplayType&gt;&lt;ConnectionInfo&gt;&lt;ConnectionType&gt;ConnectionType_IPAddress&lt;/ConnectionType&gt;&lt;IPAddress&gt;192.168.254.11&lt;/IPAddress&gt;&lt;/ConnectionInfo&gt;&lt;FirmwareRevision&gt;A.06.36 [001]&lt;/FirmwareRevision&gt;&lt;IsExternalContactsBoardInstalled&gt;false&lt;/IsExternalContactsBoardInstalled&gt;&lt;IsSealWashInstalled&gt;false&lt;/IsSealWashInstalled&gt;&lt;IsSolventSelectionValveInstalled&gt;false&lt;/IsSolventSelectionValveInstalled&gt;&lt;IsFlowSensorInstalled&gt;false&lt;/IsFlowSensorInstalled&gt;&lt;FlowSensorVersion&gt;FS1_20microl&lt;/FlowSensorVersion&gt;&lt;PressureUnit&gt;Unit_Bar&lt;/PressureUnit&gt;&lt;/PumpConfig&gt;</ConfigurationXml>
+  <Timetable>
+    <TimetableEntry xsi:type="ChangeFlowType" ObjectID="2680524c-1bea-4a99-99de-032faf2231e0">
+      <Time>30</Time>
+      <Flow>0.25</Flow>
+    </TimetableEntry>
+    <TimetableEntry xsi:type="ChangeFlowType" ObjectID="3ef3d4d3-ce88-4c39-a83d-0cb6939a33cf">
+      <Time>40</Time>
+      <Flow>0.25</Flow>
+    </TimetableEntry>
+    <TimetableEntry xsi:type="ChangePressureType" ObjectID="2ec1d344-aacb-4db2-9a53-96ded3f9abbd">
+      <Time>30</Time>
+      <HighPressureLimit>600</HighPressureLimit>
+    </TimetableEntry>
+    <TimetableEntry xsi:type="ChangePressureType" ObjectID="bfa28042-e9d4-406b-9ee2-de23f75bf2fa">
+      <Time>40</Time>
+      <HighPressureLimit>600</HighPressureLimit>
+    </TimetableEntry>
+    <TimetableEntry xsi:type="ChangeSolventCompositionType" ObjectID="4123386c-c7e3-45b1-918a-8a433a4fb434">
+      <Time>30</Time>
+      <PercentA>0</PercentA>
+      <PercentB>100</PercentB>
+      <PercentC>0</PercentC>
+      <PercentD>0</PercentD>
+    </TimetableEntry>
+    <TimetableEntry xsi:type="ChangeSolventCompositionType" ObjectID="b93020d9-c7df-4ac3-b779-39e5f36ee63c">
+      <Time>40</Time>
+      <PercentA>0</PercentA>
+      <PercentB>100</PercentB>
+      <PercentC>0</PercentC>
+      <PercentD>0</PercentD>
+    </TimetableEntry>
+    <TimetableEntry xsi:type="ChangeSolventCompositionType" ObjectID="f5834ca1-c352-42b0-b943-a175605759a9">
+      <Time>41</Time>
+      <PercentA>95</PercentA>
+      <PercentB>5</PercentB>
+      <PercentC>0</PercentC>
+      <PercentD>0</PercentD>
+    </TimetableEntry>
+  </Timetable>
+  <StopTime>
+    <StopTimeMode>StopTime_Set</StopTimeMode>
+    <StopTimeValue>50</StopTimeValue>
+  </StopTime>
+  <PostTime>
+    <PostTimeMode>PostTime_Off</PostTimeMode>
+  </PostTime>
+  <Flow>0.25</Flow>
+  <UseSolventTypes>false</UseSolventTypes>
+  <StrokeA>
+    <AutomaticStrokeCalculation>true</AutomaticStrokeCalculation>
+  </StrokeA>
+  <CompressA>
+    <CompressibilityMode>CompressibilityValueSet</CompressibilityMode>
+    <CompressibilityValueSet>100</CompressibilityValueSet>
+  </CompressA>
+  <SolventComposition>
+    <SolventElement>
+      <Channel>Channel_A</Channel>
+      <Channel1UserName>H2O+0.1af</Channel1UserName>
+      <Channel2UserName />
+      <SelectedSolventChannel>Channel1</SelectedSolventChannel>
+      <Used>true</Used>
+      <Percentage>95</Percentage>
+    </SolventElement>
+    <SolventElement>
+      <Channel>Channel_B</Channel>
+      <Channel1UserName>MeOH</Channel1UserName>
+      <Channel2UserName />
+      <SelectedSolventChannel>Channel1</SelectedSolventChannel>
+      <Used>true</Used>
+      <Percentage>5</Percentage>
+    </SolventElement>
+    <SolventElement>
+      <Channel>Channel_C</Channel>
+      <Channel1UserName>H2O + 0.1%AF</Channel1UserName>
+      <Channel2UserName />
+      <SelectedSolventChannel>Channel1</SelectedSolventChannel>
+      <Used>false</Used>
+      <Percentage>0</Percentage>
+    </SolventElement>
+    <SolventElement>
+      <Channel>Channel_D</Channel>
+      <Channel1UserName>MeOH</Channel1UserName>
+      <Channel2UserName />
+      <SelectedSolventChannel>Channel1</SelectedSolventChannel>
+      <Used>false</Used>
+      <Percentage>0</Percentage>
+    </SolventElement>
+  </SolventComposition>
+  <LowPressureLimit>0</LowPressureLimit>
+  <HighPressureLimit>600</HighPressureLimit>
+  <MaximumFlowRamp>100</MaximumFlowRamp>
+  <PrimaryChannel>Automatic</PrimaryChannel>
+</PumpMethod>
