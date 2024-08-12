@@ -1,0 +1,3 @@
+= Extractor
+
+Generates data from the files available in this repository, in order to ease processing.

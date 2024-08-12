@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+requires-python = ">=3.7"
+name = "extractor"
+version = "0.0.1"
+dependencies = ["numpy", "pandas", "pytest"]
+
+[project.scripts]
+extractor = "extractor.extractor:main"
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
