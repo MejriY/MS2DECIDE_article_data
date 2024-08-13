@@ -1,26 +1,21 @@
 import pandas as pd
-from zipfile import ZipFile 
-import zipfile
-from typing import BinaryIO
 import os
 import requests
+import json
 
 class GnpsFile:
-    def __init__(self, compressed: str | os.PathLike | BinaryIO):
-        self.compressed = compressed
+    def __init__(self, json: str):
+        self.json = json
 
     def df(self):
-        with ZipFile(self.compressed) as myzip:
-            p = zipfile.Path(myzip, at="DB_result/")
-            l = set(p.iterdir())
-            assert len(l) == 1
-            (e, ) = l
-            with e.open() as myfile:
-                return pd.read_csv(myfile, sep="\t")
+        js = json.load(self.json)
+        assert len(js) == 1
+        (k, v), = js.items()
+        df = pd.DataFrame(v)
+        return df
     
 class GnpsFetcher:
     def fetch(task_id: str):
-        # url = f"https://gnps.ucsd.edu/ProteoSAFe/DownloadResult?task={task_id}&view=view_all_annotations_DB"
         url = f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_annotations_DB"
         with requests.get(url) as r:
             r.raise_for_status()
