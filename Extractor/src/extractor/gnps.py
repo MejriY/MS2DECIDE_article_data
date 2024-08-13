@@ -4,15 +4,16 @@ import requests
 import json
 
 class GnpsFile:
-    def __init__(self, json: str):
-        self.json = json
+    def __init__(self, json_file: str | os.PathLike):
+        self.json_file = json_file
 
     def df(self):
-        js = json.load(self.json)
-        assert len(js) == 1
-        (k, v), = js.items()
-        df = pd.DataFrame(v)
-        return df
+        with open(self.json_file) as json_data:
+            js = json.load(json_data)
+            assert len(js) == 1
+            (k, v), = js.items()
+            df = pd.DataFrame(v)
+            return df
     
 class GnpsFetcher:
     def fetch(task_id: str):
