@@ -15,6 +15,14 @@ from rdkit.Chem.Draw import rdDepictor
 import matchms
 from pathlib import Path
 
+output_dir = Path("../Generated/") / "Manufactured case"
+if output_dir.exists():
+    for f in output_dir.iterdir():
+        f.unlink()
+    output_dir.rmdir()
+
+output_dir.mkdir(parents=True)
+
 compounds_file = "../Manufactured case/Compounds.tsv"
 compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
 names = set(compounds.index.to_list())
@@ -30,6 +38,20 @@ compounds["Precursor m/z"] = mgfs.precursors
 compounds["Precursor m/z − relative molecular weight"] = compounds["Precursor m/z"] - compounds["Relative molecular weight"]
 
 d = mgfs.d
+for name in d.keys():
+    spectrum = d[name]
+    id = compounds.loc[name, "Id"]
+    spectrum.set("feature_id", id)
+
+all_spectra = list()
+for id in compounds["Id"]:
+    name = compounds[compounds["Id"] == id].index[0]
+    spectrum = d[name]
+    all_spectra.append(spectrum)
+
+output_mgf = output_dir / "all.mgf"
+matchms.exporting.save_as_mgf(all_spectra, str(output_mgf))
+
 s = next(iter(d.values()))
 s.get("precursor_mz")
 
