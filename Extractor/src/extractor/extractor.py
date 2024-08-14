@@ -49,7 +49,7 @@ for id in compounds["Id"]:
     spectrum = d[name]
     all_spectra.append(spectrum)
 
-output_mgf = output_dir / "all.mgf"
+output_mgf = output_dir / "All.mgf"
 matchms.exporting.save_as_mgf(all_spectra, str(output_mgf))
 
 s = next(iter(d.values()))
