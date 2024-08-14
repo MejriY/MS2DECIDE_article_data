@@ -49,8 +49,8 @@ for id in compounds["Id"]:
     spectrum = d[name]
     all_spectra.append(spectrum)
 
-output_mgf = output_dir / "All.mgf"
-matchms.exporting.save_as_mgf(all_spectra, str(output_mgf))
+matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All Matchms.mgf"))
+matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All Gnps.mgf"), export_style="gnps")
 
 s = next(iter(d.values()))
 s.get("precursor_mz")
