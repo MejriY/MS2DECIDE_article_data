@@ -24,3 +24,7 @@ class MgfFiles:
     @property
     def precursors(self):
         return pd.Series({n: s.get("precursor_mz") for n, s in self.d.items()})
+    
+    @property
+    def retentions(self):
+        return pd.Series({n: s.get("retention_time") for n, s in self.d.items()})

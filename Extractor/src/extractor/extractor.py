@@ -35,6 +35,7 @@ assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
 inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
 compounds["Relative molecular weight"] = inchis.apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)))
 compounds["Precursor m/z"] = mgfs.precursors
+compounds["Retention time"] = mgfs.retentions
 compounds["Precursor m/z − relative molecular weight"] = compounds["Precursor m/z"] - compounds["Relative molecular weight"]
 
 d = mgfs.d
@@ -52,6 +53,14 @@ for id in compounds["Id"]:
 matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All.mgf"))
 # export_style="gnps" does not export the feature_ids. It does export PEPMASS, but apparently having the charge and the precursor_mz is ok to GNPS as well.
 # matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All Gnps.mgf"), export_style="gnps")
+
+qt = pd.DataFrame()
+qt["row ID"] = compounds["Id"]
+qt["row m/z"] = compounds["Precursor m/z"]
+qt["row retention time"] = compounds["Retention time"] / 60.0
+qt["1.mzXML Peak area"] = 0
+qt.set_index("row ID", inplace=True)
+qt.to_csv(output_dir / "Quantification table.csv")
 
 task_ids_file = "../Manufactured case/Gnps task ids.json"
 with open(task_ids_file) as task_ids_data:
