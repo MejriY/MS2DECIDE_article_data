@@ -41,7 +41,7 @@ d = mgfs.d
 for name in d.keys():
     spectrum = d[name]
     id = compounds.loc[name, "Id"]
-    spectrum.set("feature_id", id)
+    spectrum.set("scans", id)
 
 all_spectra = list()
 for id in compounds["Id"]:
