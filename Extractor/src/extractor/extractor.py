@@ -5,6 +5,7 @@ from extractor.gnps import GnpsAnnotationsFile
 from extractor.gnps import GnpsCacher
 from extractor.gnps import GnpsParametersFile
 from extractor.gnps import GnpsInchiScore
+from extractor.mgfs import MgfFiles
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import Descriptors
@@ -14,18 +15,23 @@ from rdkit.Chem.Draw import rdDepictor
 import matchms
 from pathlib import Path
 
-p = Path("../Manufactured case/Mgf files/")
+compounds_file = "../Manufactured case/Compounds.tsv"
+compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
+names = set(compounds.index.to_list())
+assert len(names) == 96
 
-b = list(matchms.importing.load_from_mgf("../Manufactured case/Mgf files/3-beta-amino-pregnane.mgf"))
-# list files in the directory
-l = os.listdir(p)
-for file_name in l:
-    path = p / file_name
-    with open(path) as f:
-        lines = f.readlines()
-        lines = [l for l in lines if not l.startswith("TITLE")]
-    with open(path, "w") as f:
-        f.writelines(lines)
+p = Path("../Manufactured case/Mgf files/")
+mgfs = MgfFiles(p)
+assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
+
+inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
+compounds["Relative molecular weight"] = inchis.apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)))
+compounds["Precursor m/z"] = mgfs.precursors
+compounds["Precursor m/z − relative molecular weight"] = compounds["Precursor m/z"] - compounds["Relative molecular weight"]
+
+d = mgfs.d
+s = next(iter(d.values()))
+s.get("precursor_mz")
 
 # kf_from_inchi = Chem.inchi.MolFromInchi(
 #     "InChI=1S/C15H10O6/c16-8-3-1-7(2-4-8)15-14(20)13(19)12-10(18)5-9(17)6-11(12)21-15/h1-6,16-18,20"
@@ -60,13 +66,6 @@ t = Draw.MolToACS1996SVG(hl_from_inchi)
 # Draw.MolToSVG(hl_from_inchi)
 # ValueError: Bad Conformer Id
 
-compounds_file = "../Manufactured case/Compounds.tsv"
-compounds = pd.read_csv(compounds_file, sep="\t").set_index("Id")
-# compounds["Rdkit_molecular_weight"] = compounds.loc[compounds.index <= 1, ["InChI"]].apply(
-#     lambda i: Descriptors.HeavyAtomMolWt(Chem.inchi.MolFromInchi(i)), axis=1
-# )
-inchs = compounds.loc[compounds["Exact mass"].notna(), "InChI"]
-compounds["Rdkit molecular weight"] = inchs.apply(lambda i: Descriptors.HeavyAtomMolWt(Chem.inchi.MolFromInchi(i)))
 
 task_ids_file = "../Manufactured case/Gnps task ids.json"
 with open(task_ids_file) as task_ids_data:
