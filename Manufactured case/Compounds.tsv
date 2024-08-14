@@ -65,7 +65,7 @@ Id	Reported	Chemical name	Chemical class	InChI
 64	1	N-methyltryptamine	Indole alkaloid	InChI=1S/C11H14N2/c1-12-7-6-9-8-13-11-5-3-2-4-10(9)11/h2-5,8,12-13H,6-7H2,1H3
 65	1	Ombellifrone	Coumarine	InChI=1S/C9H6O3/c10-7-3-1-6-2-4-9(11)12-8(6)5-7/h1-5,10H
 66	1	Onychine	Azafluorenone alkaloid	InChI=1S/C13H9NO/c1-8-6-7-14-12-9-4-2-3-5-10(9)13(15)11(8)12/h2-7H,1H3
-67	1	Oubacryptine 	Benzophenanthridine alkaloid	InChI=1S/C22H23NO3/c1-25-21-10-18-16-8-13-4-3-7-23(13)12-20(16)15-6-5-14(24)9-17(15)19(18)11-22(21)26-2/h5-6,9-11,13,24H,3-4,7-8,12H2,1-2H3/t13-/m1/s1
+67	1	Oubacryptine	Benzophenanthridine alkaloid	InChI=1S/C22H23NO3/c1-25-21-10-18-16-8-13-4-3-7-23(13)12-20(16)15-6-5-14(24)9-17(15)19(18)11-22(21)26-2/h5-6,9-11,13,24H,3-4,7-8,12H2,1-2H3/t13-/m1/s1
 68	1	Pachypodol	Flavonoid	InChI=1S/C18H16O7/c1-22-10-7-12(20)15-14(8-10)25-17(18(24-3)16(15)21)9-4-5-11(19)13(6-9)23-2/h4-8,19-20H,1-3H3
 69	1	Parahydroxybenzoic acid	Monoaromatic	InChI=1S/C7H6O3/c8-6-3-1-5(2-4-6)7(9)10/h1-4,8H,(H,9,10)
 70	1	Phyllochrysine	Securinega alkaloid	InChI=1S/C13H15NO2/c15-12-7-9-4-5-10-8-13(9,16-12)11-3-1-2-6-14(10)11/h4-5,7,10-11H,1-3,6,8H2/t10-,11+,13+/m1/s1
