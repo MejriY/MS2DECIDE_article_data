@@ -60,6 +60,8 @@ qt["row m/z"] = compounds["Precursor m/z"]
 qt["row retention time"] = compounds["Retention time"] / 60.0
 qt["1.mzXML Peak area"] = 0
 qt.set_index("row ID", inplace=True)
+# TODO find out how we found this value
+qt.at[91, "row retention time"] = 721.696
 qt.to_csv(output_dir / "Quantification table.csv")
 
 task_ids_file = "../Manufactured case/Gnps task ids.json"
