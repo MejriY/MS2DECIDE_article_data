@@ -28,8 +28,8 @@ compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
 names = set(compounds.index.to_list())
 assert len(names) == 96
 
-p = Path("../Manufactured case/Mgf files/")
-mgfs = MgfFiles(p)
+all_annotations = Path("../Manufactured case/Mgf files/")
+mgfs = MgfFiles(all_annotations)
 assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
 
 inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
@@ -57,10 +57,22 @@ task_ids_file = "../Manufactured case/Gnps task ids.json"
 with open(task_ids_file) as task_ids_data:
     task_ids = json.load(task_ids_data)
 
+# task_id = task_ids[0]
+# all_annotations = GnpsCacher.cache_retrieve(task_id)
+# parameters = GnpsCacher.cache_retrieve_parameters(task_id)
+# isc = GnpsInchiScore(all_annotations, parameters)
+# new_cols = {
+#     f"inchi_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.inchis,
+#     f"score_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.scores,
+# }
+# assert isc.inchis.index == compounds.index
+# assert isc.scores.index == compounds.index
+# compounds.assign(**new_cols)
+
 for task_id in task_ids:
-    p = GnpsCacher.cache_retrieve(task_id)
-    x = GnpsCacher.cache_retrieve_parameters(task_id)
-    isc = GnpsInchiScore(p, x)
+    all_annotations = GnpsCacher.cache_retrieve(task_id)
+    parameters = GnpsCacher.cache_retrieve_parameters(task_id)
+    isc = GnpsInchiScore(all_annotations, parameters)
     new_cols = {
         f"inchi_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.inchis,
         f"score_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.scores,
