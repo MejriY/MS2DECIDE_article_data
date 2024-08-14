@@ -1,3 +1,3 @@
 = MS2DECIDE article data
 
-Data about the (draft) article about MS2DECIDE.
+Data related to the MS2DECIDE article.
