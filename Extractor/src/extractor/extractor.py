@@ -14,8 +14,10 @@ from rdkit.Avalon import pyAvalonTools
 from rdkit.Chem.Draw import rdDepictor
 import matchms
 from pathlib import Path
+from ms2decide.K import K
+from ms2decide.Tanimotos import Tanimotos
 
-output_dir = Path("../Generated/") / "Manufactured case"
+output_dir = Path("../Generated/") / "Manufactured case/"
 if output_dir.exists():
     for f in output_dir.iterdir():
         f.unlink()
@@ -64,21 +66,27 @@ qt.set_index("row ID", inplace=True)
 qt.at[91, "row retention time"] = 721.696
 qt.to_csv(output_dir / "Quantification table.csv")
 
+dict_inchi = {'GNPS': 'InChI=1S/C43H54N4O6/c1-7-23-17-25-20-43(22-53-52-6)39-28(15-16-47(40(23)43)41(25)48)27-13-14-34(50-4)36(38(27)45-39)31-18-29-24(8-2)21-46(3)33(35(29)42(49)51-5)19-30-26-11-9-10-12-32(26)44-37(30)31/h9-14,23-25,29,31,33,35,40-41,44-45,48H,7-8,15-21H2,1-6H3/t23-,24+,25-,29-,31-,33-,35?,40-,41?,43?/m0/s1',
+                      'ISDB': 'InChI=1S/C23H27N2O3/c1-25-8-7-23-16-4-2-3-5-17(16)24-20(26)11-18-21(22(23)24)15(10-19(23)28-13-25)14(12-25)6-9-27-18/h2-6,15,18-19,21-22H,7-13H2,1H3/q+1',
+                      'SIRIUS': 'InChI=1S/C43H52N4O5/c1-7-24-15-23-20-43(42(49)52-6)39-27(13-14-47(21-23)40(24)43)29-17-30(36(50-4)19-34(29)45-39)31-16-28-25(8-2)22-46(3)35(37(28)41(48)51-5)18-32-26-11-9-10-12-33(26)44-38(31)32/h8-12,17,19,23-24,28,31,35,37,40,44-45H,7,13-16,18,20-22H2,1-6H3'}
+ 
+tanimotos = Tanimotos(dict_inchi)
+
 task_ids_file = "../Manufactured case/Gnps task ids.json"
 with open(task_ids_file) as task_ids_data:
     task_ids = json.load(task_ids_data)
 
-# task_id = task_ids[0]
-# all_annotations = GnpsCacher.cache_retrieve(task_id)
-# parameters = GnpsCacher.cache_retrieve_parameters(task_id)
-# isc = GnpsInchiScore(all_annotations, parameters)
-# new_cols = {
-#     f"inchi_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.inchis,
-#     f"score_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.scores,
-# }
-# assert isc.inchis.index == compounds.index
-# assert isc.scores.index == compounds.index
-# compounds.assign(**new_cols)
+task_id = task_ids[0]
+all_annotations = GnpsCacher(output_dir / "Fetched/").cache_retrieve(task_id)
+parameters = GnpsCacher(output_dir / "Fetched/").cache_retrieve_parameters(task_id)
+isc = GnpsInchiScore(all_annotations, parameters)
+new_cols = {
+    f"inchi_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.inchis,
+    f"score_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.scores,
+}
+assert isc.inchis.index == compounds["Id"]
+assert isc.scores.index == compounds.index
+compounds.set_index("Id").assign(**new_cols)
 
 for task_id in task_ids:
     all_annotations = GnpsCacher.cache_retrieve(task_id)

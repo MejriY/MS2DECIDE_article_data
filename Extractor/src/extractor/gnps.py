@@ -63,18 +63,19 @@ class GnpsFetcher:
             f.write(GnpsFetcher.fetch_parameters(task_id))
     
 class GnpsCacher:
-    CACHE_DIR = Path("fetched")
-
-    def cache_retrieve(task_id: str):
-        os.makedirs(GnpsCacher.CACHE_DIR, exist_ok=True)
-        path = GnpsCacher.CACHE_DIR / f"{task_id}.json"
+    def __init__(self, cache_dir: str | os.PathLike):
+        self.cache_dir = cache_dir
+        
+    def cache_retrieve(self, task_id: str):
+        os.makedirs(self.cache_dir, exist_ok=True)
+        path = self.cache_dir / f"{task_id}.json"
         if not path.exists():
             GnpsFetcher.fetch_and_save(task_id, path)
         return path
     
-    def cache_retrieve_parameters(task_id: str):
-        os.makedirs(GnpsCacher.CACHE_DIR, exist_ok=True)
-        path = GnpsCacher.CACHE_DIR / f"{task_id}.xml"
+    def cache_retrieve_parameters(self, task_id: str):
+        os.makedirs(self.cache_dir, exist_ok=True)
+        path = self.cache_dir / f"{task_id}.xml"
         if not path.exists():
             GnpsFetcher.fetch_parameters_and_save(task_id, path)
         return path
