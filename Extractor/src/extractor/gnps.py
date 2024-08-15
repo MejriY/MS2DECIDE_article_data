@@ -84,8 +84,8 @@ class GnpsInchiScore:
     def __init__(self, all_annotations: Path, parameters: Path):
         self.summary = GnpsAnnotationsFile(all_annotations).summary()
         ps = GnpsParametersFile(parameters).params()
-        self.min_peaks = int(ps["MIN_MATCHED_PEAKS"])
-        self.max_delta_mass = float(ps["tolerance.PM_tolerance"])
+        self.min_peaks = int(ps["MIN_MATCHED_PEAKS_SEARCH"])
+        self.max_delta_mass = float(ps["MAX_SHIFT_MASS"])
     
     @property
     def inchis(self):
@@ -94,3 +94,11 @@ class GnpsInchiScore:
     @property
     def scores(self):
         return self.summary.loc[:, "MQScore"]
+    
+    @property
+    def inchis_scores_df(self):
+        new_cols = {
+            f"InChI GNPS - min peaks {self.min_peaks} - max delta mass {self.max_delta_mass}": self.inchis,
+            f"Score GNPS - min peaks {self.min_peaks} - max delta mass {self.max_delta_mass}": self.scores,
+        }
+        return pd.DataFrame(new_cols)

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<parameters>
+<parameter name="ANALOG_SEARCH">1</parameter>
+<parameter name="FILTER_LIBRARY">0</parameter>
+<parameter name="FILTER_PRECURSOR_WINDOW">0</parameter>
+<parameter name="GROUP_COUNT_AGGREGATE_METHOD">Mean</parameter>
+<parameter name="MAXIMUM_COMPONENT_SIZE">100</parameter>
+<parameter name="MAX_SHIFT">500</parameter>
+<parameter name="MAX_SHIFT_MASS">25</parameter>
+<parameter name="METADATA_COLUMN">None</parameter>
+<parameter name="METADATA_COLUMN_FACET">None</parameter>
+<parameter name="METADATA_CONDITION_ONE">None</parameter>
+<parameter name="METADATA_CONDITION_TWO">None</parameter>
+<parameter name="MIN_MATCHED_PEAKS">6</parameter>
+<parameter name="MIN_MATCHED_PEAKS_SEARCH">4</parameter>
+<parameter name="MIN_PEAK_INT">0.0</parameter>
+<parameter name="PAIRS_MIN_COSINE">0.70</parameter>
+<parameter name="QIIME2_PCOA_DISTANCE">cosine</parameter>
+<parameter name="QUANT_FILE_NORM">RowSum</parameter>
+<parameter name="QUANT_TABLE_SOURCE">MZMINE2</parameter>
+<parameter name="RUN_DEREPLICATOR">0</parameter>
+<parameter name="RUN_STATS">No</parameter>
+<parameter name="SCORE_THRESHOLD">0.0001</parameter>
+<parameter name="TOPK">10</parameter>
+<parameter name="TOP_K_RESULTS">1</parameter>
+<parameter name="WINDOW_FILTER">0</parameter>
+<parameter name="desc">Chemodiverse_compounds_4_25</parameter>
+<parameter name="email">yassinemejri96@gmail.com</parameter>
+<parameter name="googlesheetsmetadata">None</parameter>
+<parameter name="quantification_table">f.yassine/Chemodiverse_compounds/Quantification table.csv;</parameter>
+<parameter name="spec_on_server">f.yassine/Chemodiverse_compounds/All.mgf;</parameter>
+<parameter name="task">3a2b8412d10a4d7abdccfdb6590996c8</parameter>
+<parameter name="tolerance.Ion_tolerance">0.02</parameter>
+<parameter name="tolerance.PM_tolerance">0.02</parameter>
+<parameter name="upload_file_mapping">spec-00000.mgf|yassine/Chemodiverse_compounds/All.mgf</parameter>
+<parameter name="upload_file_mapping">quantification_table-00000.csv|yassine/Chemodiverse_compounds/Quantification table.csv</parameter>
+<parameter name="user">yassine</parameter>
+<parameter name="uuid">1E6CD424-F81A-0001-3B81-F9C012F01862</parameter>
+<parameter name="workflow">FEATURE-BASED-MOLECULAR-NETWORKING</parameter>
+<parameter name="workflow_version">release_28.2</parameter>
+</parameters>

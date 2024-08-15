@@ -16,12 +16,11 @@ import matchms
 from pathlib import Path
 from ms2decide.K import K
 from ms2decide.Tanimotos import Tanimotos
+from shutil import rmtree
 
 output_dir = Path("../Generated/") / "Manufactured case/"
-if output_dir.exists():
-    for f in output_dir.iterdir():
-        f.unlink()
-    output_dir.rmdir()
+assert rmtree.avoids_symlink_attacks
+rmtree(output_dir, ignore_errors=True)
 
 output_dir.mkdir(parents=True)
 
@@ -76,29 +75,20 @@ task_ids_file = "../Manufactured case/Gnps task ids.json"
 with open(task_ids_file) as task_ids_data:
     task_ids = json.load(task_ids_data)
 
-task_id = task_ids[0]
-all_annotations = GnpsCacher(output_dir / "Fetched/").cache_retrieve(task_id)
-parameters = GnpsCacher(output_dir / "Fetched/").cache_retrieve_parameters(task_id)
-isc = GnpsInchiScore(all_annotations, parameters)
-new_cols = {
-    f"inchi_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.inchis,
-    f"score_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.scores,
-}
-assert isc.inchis.index == compounds["Id"]
-assert isc.scores.index == compounds.index
-compounds.set_index("Id").assign(**new_cols)
+compounds_by_id = compounds.reset_index().set_index("Id")
+compounds_joined = compounds_by_id
 
-for task_id in task_ids:
-    all_annotations = GnpsCacher.cache_retrieve(task_id)
-    parameters = GnpsCacher.cache_retrieve_parameters(task_id)
+for task_id in task_ids[:20]:
+    all_annotations = GnpsCacher(output_dir / "Fetched/").cache_retrieve(task_id)
+    parameters = GnpsCacher(output_dir / "Fetched/").cache_retrieve_parameters(task_id)
     isc = GnpsInchiScore(all_annotations, parameters)
-    new_cols = {
-        f"inchi_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.inchis,
-        f"score_gnps_{isc.min_peaks}_{isc.max_delta_mass}": isc.scores,
-    }
-    assert isc.inchis.index == compounds.index
-    assert isc.scores.index == compounds.index
-    compounds.assign(**new_cols)
+    assert isc.inchis.index.isin(compounds_by_id.index).all()
+    assert isc.scores.index.isin(compounds_by_id.index).all()
+    print(f"Joining task {task_id}, min peaks {isc.min_peaks}, max delta mass {isc.max_delta_mass}")
+    task_df = isc.inchis_scores_df
+    compounds_joined = compounds_joined.join(task_df)
+
+compounds_joined.to_csv(output_dir / "Compounds joined.csv")
 
 
 def to_image():
