@@ -98,7 +98,7 @@ class GnpsInchiScore:
     @property
     def inchis_scores_df(self):
         new_cols = {
-            f"InChI GNPS - min peaks {self.min_peaks} - max delta mass {self.max_delta_mass}": self.inchis,
-            f"Score GNPS - min peaks {self.min_peaks} - max delta mass {self.max_delta_mass}": self.scores,
+            f"InChI GNPS; peaks ≥ {self.min_peaks}; Δ mass ≤ {self.max_delta_mass}": self.inchis,
+            f"Score GNPS; peaks ≥ {self.min_peaks}; Δ mass ≤ {self.max_delta_mass}": self.scores,
         }
         return pd.DataFrame(new_cols)
