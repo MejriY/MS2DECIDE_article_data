@@ -48,6 +48,8 @@ for name in d.keys():
     spectrum = d[name]
     id = compounds.loc[name, "Id"]
     spectrum.set("scans", id)
+    # No apparent effect when exported; seems that we need to build the spectrum using Spectrum(mz=sp.peaks.mz,intensities=sp.peaks.intensities,metadata=m).
+    # spectrum.set("MSLEVEL", 2)
 
 all_spectra = list()
 for id in compounds["Id"]:
@@ -55,9 +57,9 @@ for id in compounds["Id"]:
     spectrum = d[name]
     all_spectra.append(spectrum)
 
-matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All.mgf"))
-# export_style="gnps" does not export the feature_ids. It does export PEPMASS, but apparently having the charge and the precursor_mz is ok to GNPS as well.
-# matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All Gnps.mgf"), export_style="gnps")
+# This export PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
+matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All Matchms.mgf"))
+matchms.exporting.save_as_mgf(all_spectra, str(output_dir / "All GNPS.mgf"), export_style="gnps")
 
 qt = pd.DataFrame()
 qt["row ID"] = compounds["Id"]
@@ -94,6 +96,9 @@ for task_id in task_ids[:20]:
 
 compounds_joined.to_csv(output_dir / "Compounds joined.csv")
 
+def main():
+    # todo
+    pass
 
 def to_image():
     hl_from_inchi = Chem.inchi.MolFromInchi(
