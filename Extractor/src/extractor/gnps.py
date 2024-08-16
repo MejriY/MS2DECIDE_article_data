@@ -5,6 +5,12 @@ import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
 from collections import Counter
+from dataclasses import dataclass
+from rdkit.Chem.rdchem import Mol
+import rdkit.Chem as Chem
+from ms2decide.ClosestGNPS import _get_iterative_parameters
+
+DISCOUNTS = _get_iterative_parameters()
 
 class GnpsAnnotations:
     def __init__(self, json_raw_data: str):
@@ -104,6 +110,10 @@ class GnpsInchiScore:
         self.max_delta_mass = float(ps["MAX_SHIFT_MASS"])
     
     @property
+    def ids(self):
+        return self.summary.index
+    
+    @property
     def inchis(self):
         if(self.summary.empty):
             return pd.Series()
@@ -118,7 +128,55 @@ class GnpsInchiScore:
     @property
     def inchis_scores_df(self):
         new_cols = {
-            f"InChI GNPS; peaks ≥ {self.min_peaks}; Δ mass ≤ {self.max_delta_mass}": self.inchis,
-            f"Score GNPS; peaks ≥ {self.min_peaks}; Δ mass ≤ {self.max_delta_mass}": self.scores,
+            f"InChI GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.inchis,
+            f"Score GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.scores,
         }
         return pd.DataFrame(new_cols)
+
+    @property
+    def attempt(self):
+        return GnpsIterativeAttempt(self.min_peaks, self.max_delta_mass if self.max_delta_mass != 0 else float('inf'))
+    
+    def match(self, id: int):
+        if(id not in self.ids):
+            return None
+        return GnpsMatch(self.summary.loc[id, "INCHI"], float(self.scores[id]))
+
+@dataclass(frozen=True, order=True)
+class GnpsIterativeAttempt:
+    min_peaks: int
+    max_delta_mass: float
+    
+    @property
+    def discount(self):
+        return DISCOUNTS[self.min_peaks][self.max_delta_mass]
+    
+@dataclass(frozen=True)
+class GnpsMatch:
+    inchi: str
+    score: float
+    
+    def sanitized_inchi(self):
+        removed = self.inchi.replace('"', "").strip()
+        if(not removed.startswith("InChI=")):
+            return "InChI=" + removed
+        return removed
+    
+    def to_readable(self):
+        return GnpsReadableMatch(Chem.inchi.MolFromInchi(self.sanitized_inchi(), logLevel = None), self.score)
+    
+@dataclass(frozen=True)
+class GnpsReadableMatch:
+    inchi: Mol
+    score: float
+    
+class GnpsIteratedNp:
+    def __init__(self, match_by_attempt: dict[GnpsIterativeAttempt, GnpsReadableMatch]):
+        self.match_by_attempt = match_by_attempt
+    
+    def best_match_discounted(self):
+        for attempt in self.match_by_attempt.keys():
+            match = self.match_by_attempt[attempt]
+            if(match is not None and match.inchi is not None):
+                # print(f"Best match for {attempt} with discount {attempt.discount}: {match.inchi} with score {match.score} of type {type(match.score)}")
+                return GnpsReadableMatch(match.inchi, match.score * attempt.discount)

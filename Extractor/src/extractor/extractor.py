@@ -3,6 +3,7 @@ import pandas as pd
 import json
 from extractor.gnps import GnpsCacher
 from extractor.gnps import GnpsAnnotations
+from extractor.gnps import GnpsIteratedNp
 from extractor.gnps import GnpsParametersFile
 from extractor.gnps import GnpsInchiScore
 from extractor.mgfs import MgfFiles
@@ -76,18 +77,27 @@ def generate_summary():
     assert len(set(ids.to_list())) == 96
 
     compounds_joined = compounds_by_id
+    iterated_np_by_id_dict = {id: {} for id in ids}
     for task_id in task_ids:
         all_annotations = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_annotations(task_id)
         parameters_file = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_parameters(task_id)
         isc = GnpsInchiScore(all_annotations, GnpsParametersFile(parameters_file))
         assert isc.inchis.index.isin(ids).all()
         assert isc.scores.index.isin(ids).all()
+        for id in ids:
+            match = isc.match(id)
+            iterated_np_by_id_dict[id][isc.attempt] = match.to_readable() if match is not None else None
         print(f"Joining task {task_id}, min peaks {isc.min_peaks}, max delta mass {isc.max_delta_mass}")
         task_df = isc.inchis_scores_df
         compounds_joined = compounds_joined.join(task_df)
 
+    iterated_np_by_id = {id: GnpsIteratedNp(iterated_np_by_id_dict[id]) for id in ids}
+    best_match_discounted_by_id = {i: v.best_match_discounted() if v is not None else None for (i, v) in iterated_np_by_id.items()}
+    print(best_match_discounted_by_id)
+    compounds_joined["Gnps iterated inchi"] = pd.Series({i: (Chem.inchi.MolToInchi(v.inchi) if v is not None else None) for (i, v) in best_match_discounted_by_id.items()})
+    compounds_joined["Gnps iterated discounted score"] = pd.Series({i: v.score if v is not None else None for (i, v) in best_match_discounted_by_id.items()})
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
-
+    
 def main():
     # todo
     pass
