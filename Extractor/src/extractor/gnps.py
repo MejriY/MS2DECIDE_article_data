@@ -76,7 +76,7 @@ class GnpsCacher:
     def __init__(self, cache_dir: str | os.PathLike):
         self.cache_dir = cache_dir
         
-    def cache_retrieve_annotations_data(self, task_id: str):
+    def cache_retrieve_annotations(self, task_id: str):
         os.makedirs(self.cache_dir, exist_ok=True)
         path = self.cache_dir / f"{task_id}.json"
         if path.exists():
@@ -84,7 +84,7 @@ class GnpsCacher:
                 json_data = f.read()
         else:
             json_data = GnpsFetcher.fetch_and_save(task_id, path)
-        return json_data
+        return GnpsAnnotations(json_data)
     
     def cache_retrieve_parameters(self, task_id: str):
         os.makedirs(self.cache_dir, exist_ok=True)
@@ -94,18 +94,25 @@ class GnpsCacher:
         return path
     
 class GnpsInchiScore:
-    def __init__(self, all_annotations: GnpsAnnotations, parameters: Path):
-        self.summary = all_annotations.summary()
-        ps = GnpsParametersFile(parameters).params()
+    def __init__(self, all_annotations: GnpsAnnotations, parameters: GnpsParametersFile):
+        if(all_annotations.df().empty):
+            self.summary = pd.DataFrame()
+        else:
+            self.summary = all_annotations.summary()
+        ps = parameters.params()
         self.min_peaks = int(ps["MIN_MATCHED_PEAKS_SEARCH"])
         self.max_delta_mass = float(ps["MAX_SHIFT_MASS"])
     
     @property
     def inchis(self):
+        if(self.summary.empty):
+            return pd.Series()
         return self.summary.loc[:, "INCHI"]
     
     @property
     def scores(self):
+        if(self.summary.empty):
+            return pd.Series()
         return self.summary.loc[:, "MQScore"]
     
     @property

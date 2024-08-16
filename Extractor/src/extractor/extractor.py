@@ -3,6 +3,7 @@ import pandas as pd
 import json
 from extractor.gnps import GnpsCacher
 from extractor.gnps import GnpsAnnotations
+from extractor.gnps import GnpsParametersFile
 from extractor.gnps import GnpsInchiScore
 from extractor.mgfs import MgfFiles
 from rdkit import Chem
@@ -76,12 +77,11 @@ def generate_summary():
 
     compounds_joined = compounds_by_id
     for task_id in task_ids:
-        all_annotations_data = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_annotations_data(task_id)
-        all_annotations = GnpsAnnotations(all_annotations_data)
-        parameters = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_parameters(task_id)
-        isc = GnpsInchiScore(all_annotations, parameters)
+        all_annotations = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_annotations(task_id)
+        parameters_file = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_parameters(task_id)
+        isc = GnpsInchiScore(all_annotations, GnpsParametersFile(parameters_file))
         assert isc.inchis.index.isin(ids).all()
-        assert isc.scores.index.isin(ids.index).all()
+        assert isc.scores.index.isin(ids).all()
         print(f"Joining task {task_id}, min peaks {isc.min_peaks}, max delta mass {isc.max_delta_mass}")
         task_df = isc.inchis_scores_df
         compounds_joined = compounds_joined.join(task_df)
