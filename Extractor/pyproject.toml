@@ -9,7 +9,10 @@ version = "0.0.1"
 dependencies = ["rdkit", "matchms", "numpy", "pandas", "requests", "jupyter", "pytest"]
 
 [project.scripts]
-extractor = "extractor.extractor:main"
+clean = "extractor.extractor:clean"
+geninput = "extractor.extractor:generate_gnps_input"
+send = "extractor.sender:send"
+gensummary = "extractor.extractor:generate_summary"
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"

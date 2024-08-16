@@ -6,17 +6,22 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 from collections import Counter
 
-class GnpsAnnotationsFile:
-    def __init__(self, json_file: str | os.PathLike):
-        self.json_file = json_file
+class GnpsAnnotations:
+    def __init__(self, json_raw_data: str):
+        self.json_raw_data = json_raw_data
 
+    def from_file(json_file: str | os.PathLike):
+        with open(json_file) as json_data:
+            return GnpsAnnotations(json_data.read())
+    
     def df(self):
-        with open(self.json_file) as json_data:
-            js = json.load(json_data)
-            assert len(js) == 1
-            (k, v), = js.items()
-            df = pd.DataFrame(v)
-            return df
+        js = json.loads(self.json_raw_data)
+        assert len(js) == 1
+        (k, v), = js.items()
+        if(len(v) == 0):
+            return pd.DataFrame()
+        df = pd.DataFrame(v)
+        return df
     
     def summary(self):
         summary = self.df().loc[:, ["#Scan#", "Adduct", "ExactMass", "Precursor_MZ", "SpecMZ", "Charge", "SpecCharge", "MQScore", "INCHI", "INCHI_AUX", "InChIKey"]].rename(columns = {"#Scan#": "Id"})
@@ -49,8 +54,13 @@ class GnpsFetcher:
             return r.content
 
     def fetch_and_save(task_id: str, path: str | os.PathLike):
-        with open(path, "wb") as f:
-            f.write(GnpsFetcher.fetch(task_id))
+        json_data = GnpsFetcher.fetch(task_id)
+        if(GnpsAnnotations(json_data).df().empty):
+            print(f"Warning: task {task_id} has no annotations; not saving it.")
+        else:
+            with open(path, "wb") as f:
+                f.write(json_data)
+        return json_data
 
     def fetch_parameters(task_id: str):
         url = f"https://gnps.ucsd.edu/ProteoSAFe/ManageParameters?task={task_id}"
@@ -66,12 +76,15 @@ class GnpsCacher:
     def __init__(self, cache_dir: str | os.PathLike):
         self.cache_dir = cache_dir
         
-    def cache_retrieve(self, task_id: str):
+    def cache_retrieve_annotations_data(self, task_id: str):
         os.makedirs(self.cache_dir, exist_ok=True)
         path = self.cache_dir / f"{task_id}.json"
-        if not path.exists():
-            GnpsFetcher.fetch_and_save(task_id, path)
-        return path
+        if path.exists():
+            with open(path) as f:
+                json_data = f.read()
+        else:
+            json_data = GnpsFetcher.fetch_and_save(task_id, path)
+        return json_data
     
     def cache_retrieve_parameters(self, task_id: str):
         os.makedirs(self.cache_dir, exist_ok=True)
@@ -81,8 +94,8 @@ class GnpsCacher:
         return path
     
 class GnpsInchiScore:
-    def __init__(self, all_annotations: Path, parameters: Path):
-        self.summary = GnpsAnnotationsFile(all_annotations).summary()
+    def __init__(self, all_annotations: GnpsAnnotations, parameters: Path):
+        self.summary = all_annotations.summary()
         ps = GnpsParametersFile(parameters).params()
         self.min_peaks = int(ps["MIN_MATCHED_PEAKS_SEARCH"])
         self.max_delta_mass = float(ps["MAX_SHIFT_MASS"])
