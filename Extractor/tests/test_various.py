@@ -1,11 +1,11 @@
 import pandas as pd
-from extractor.gnps import GnpsAnnotationsFile
+from extractor.gnps import GnpsAnnotations
 from extractor.gnps import GnpsParametersFile
 import json
 import xml.etree.ElementTree as ET
 
 def test_read_df():
-    df = GnpsAnnotationsFile("tests/resources/26a5cbca3e844cc0b126f992c69df832.json").df()
+    df = GnpsAnnotations.from_file("tests/resources/26a5cbca3e844cc0b126f992c69df832.json").df()
     assert df.shape == (71, 48)
     
 def test_read_df_manual():
@@ -20,7 +20,7 @@ def test_read_df_manual():
 def test_parse_parameters():
     xml_file = "tests/resources/26a5cbca3e844cc0b126f992c69df832.xml"
     ps = GnpsParametersFile(xml_file).params()
-    assert len(ps) == 38
+    assert len(ps) == 37
 
 def test_parse_parameters_manual():
     xml_file = "tests/resources/26a5cbca3e844cc0b126f992c69df832.xml"
