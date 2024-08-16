@@ -16,7 +16,5 @@ d = _launch_GNPS_workflow_iterative(auth, gnps_input_mgf, gnps_input_csv, title)
 # ids_by_first = {k:[v.split('=')[1] for kk,v in d.items()] for k,d in d_jobs.items()}
 ids_by_first = {k:[v for kk,v in e.items()] for k,e in d.items()}
 all_ids = [v for d in ids_by_first.values() for v in d]
-# write to json file
 with open(input_dir/"Gnps task ids.json", 'w') as f:
-    f.write(json.dumps(ids_by_first))
-print(json.dumps(all_ids))
+    f.write(json.dumps(all_ids))
