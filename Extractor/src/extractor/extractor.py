@@ -19,10 +19,14 @@ from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
 
 output_dir = Path("../Generated/") / "Manufactured case/"
-assert rmtree.avoids_symlink_attacks
-rmtree(output_dir, ignore_errors=True)
+if(output_dir.exists()):
+    for file in output_dir.iterdir():
+        if file.is_file():
+            file.unlink()
+# assert rmtree.avoids_symlink_attacks
+# rmtree(output_dir)
 
-output_dir.mkdir(parents=True)
+output_dir.mkdir(parents=True, exist_ok=True)
 
 compounds_file = "../Manufactured case/Compounds.tsv"
 compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
@@ -61,8 +65,8 @@ qt["row m/z"] = compounds["Precursor m/z"]
 qt["row retention time"] = compounds["Retention time"] / 60.0
 qt["1.mzXML Peak area"] = 0
 qt.set_index("row ID", inplace=True)
-# TODO find out how we found this value
-qt.at[91, "row retention time"] = 721.696
+# Time in seconds as given by Mehdi
+qt.at[91, "row retention time"] = 275.28
 qt.to_csv(output_dir / "Quantification table.csv")
 
 dict_inchi = {'GNPS': 'InChI=1S/C43H54N4O6/c1-7-23-17-25-20-43(22-53-52-6)39-28(15-16-47(40(23)43)41(25)48)27-13-14-34(50-4)36(38(27)45-39)31-18-29-24(8-2)21-46(3)33(35(29)42(49)51-5)19-30-26-11-9-10-12-32(26)44-37(30)31/h9-14,23-25,29,31,33,35,40-41,44-45,48H,7-8,15-21H2,1-6H3/t23-,24+,25-,29-,31-,33-,35?,40-,41?,43?/m0/s1',
