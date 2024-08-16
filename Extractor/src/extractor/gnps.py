@@ -30,7 +30,7 @@ class GnpsAnnotations:
         return df
     
     def summary(self):
-        summary = self.df().loc[:, ["#Scan#", "Adduct", "ExactMass", "Precursor_MZ", "SpecMZ", "Charge", "SpecCharge", "MQScore", "INCHI", "INCHI_AUX", "InChIKey"]].rename(columns = {"#Scan#": "Id"})
+        summary = self.df().loc[:, ["#Scan#", "Adduct", "ExactMass", "Precursor_MZ", "SpecMZ", "Charge", "SpecCharge", "MQScore", "INCHI", "INCHI_AUX", "InChIKey", "Smiles"]].rename(columns = {"#Scan#": "Id"})
         summary["Id"] = summary["Id"].astype(int)
         return summary.set_index("Id").sort_index()
 
@@ -120,6 +120,12 @@ class GnpsInchiScore:
         return self.summary.loc[:, "INCHI"]
     
     @property
+    def smiles(self):
+        if(self.summary.empty):
+            return pd.Series()
+        return self.summary.loc[:, "Smiles"]
+    
+    @property
     def scores(self):
         if(self.summary.empty):
             return pd.Series()
@@ -129,6 +135,7 @@ class GnpsInchiScore:
     def inchis_scores_df(self):
         new_cols = {
             f"InChI GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.inchis,
+            f"Smiles GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.smiles,
             f"Score GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.scores,
         }
         return pd.DataFrame(new_cols)
@@ -140,7 +147,7 @@ class GnpsInchiScore:
     def match(self, id: int):
         if(id not in self.ids):
             return None
-        return GnpsMatch(self.summary.loc[id, "INCHI"], float(self.scores[id]))
+        return GnpsMatch(self.summary.loc[id, "INCHI"], self.summary.loc[id, "Smiles"], float(self.scores[id]))
 
 @dataclass(frozen=True, order=True)
 class GnpsIterativeAttempt:
@@ -154,6 +161,7 @@ class GnpsIterativeAttempt:
 @dataclass(frozen=True)
 class GnpsMatch:
     inchi: str
+    smiles: str
     score: float
     
     def sanitized_inchi(self):
@@ -163,11 +171,16 @@ class GnpsMatch:
         return removed
     
     def to_readable(self):
-        return GnpsReadableMatch(Chem.inchi.MolFromInchi(self.sanitized_inchi(), logLevel = None), self.score)
+        i = Chem.inchi.MolFromInchi(self.sanitized_inchi())
+        if(i is None):
+            mol = Chem.MolFromSmiles(self.smiles)
+        else:
+            mol = i
+        return GnpsReadableMatch(mol, self.score)
     
 @dataclass(frozen=True)
 class GnpsReadableMatch:
-    inchi: Mol
+    inchi: Mol | None
     score: float
     
 class GnpsIteratedNp:
