@@ -13,7 +13,6 @@ title = f"Manufactured case {datetime.now().isoformat()}"
 (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
 d = _launch_GNPS_workflow_iterative(auth, gnps_input_mgf, gnps_input_csv, title)
 
-# ids_by_first = {k:[v.split('=')[1] for kk,v in d.items()] for k,d in d_jobs.items()}
 ids_by_first = {k:[v for kk,v in e.items()] for k,e in d.items()}
 all_ids = [v for d in ids_by_first.values() for v in d]
 with open(input_dir/"Gnps task ids.json", 'w') as f:
