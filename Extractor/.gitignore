@@ -3,3 +3,4 @@ dist/
 *.pyc
 fetched/
 .ipynb_checkpoints/
+isdb/

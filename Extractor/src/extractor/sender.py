@@ -9,8 +9,8 @@ from extractor.datadirs import *
 def send():
     GENERATED_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
     
-    input_mgf = str((GENERATED_DIR_INPUT_GNPS / "All GNPS.mgf").resolve())
-    input_quant = str((GENERATED_DIR_INPUT_GNPS / "Quantification table.csv").resolve())
+    input_mgf = str((GENERATED_DIR_INPUTS / "All GNPS.mgf").resolve())
+    input_quant = str((GENERATED_DIR_INPUTS / "Quantification table.csv").resolve())
     auth = AuthMail.from_txt("../../../Auth GNPS.txt")
     title = f"Manufactured case {datetime.now().isoformat()}"
     (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)

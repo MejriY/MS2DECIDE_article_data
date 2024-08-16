@@ -10,7 +10,9 @@ from extractor.mgfs import MgfFiles
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 import matchms
+from ms2decide.MgfInstance import MgfInstance
 from ms2decide.K import K
+from ms2decide.IsdbAnnotation import get_cfm_annotation
 from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
 from extractor.datadirs import *
@@ -21,7 +23,7 @@ def clean():
 
 def generate_gnps_input():
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-    GENERATED_DIR_INPUT_GNPS.mkdir(parents=True, exist_ok=True)
+    GENERATED_DIR_INPUTS.mkdir(parents=True, exist_ok=True)
 
     compounds_file = INPUT_DIR/"Compounds.tsv"
     compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
@@ -53,8 +55,8 @@ def generate_gnps_input():
         all_spectra.append(spectrum)
 
     # This export PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
-    # matchms.exporting.save_as_mgf(all_spectra, str(generated_dir / "All Matchms.mgf"))
-    matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUT_GNPS / "All GNPS.mgf"), export_style="gnps")
+    matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All Matchms.mgf"))
+    matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All GNPS.mgf"), export_style="gnps")
 
     qt = pd.DataFrame()
     qt["row ID"] = compounds["Id"]
@@ -62,7 +64,18 @@ def generate_gnps_input():
     qt["row retention time"] = compounds["Retention time"] / 60.0
     qt["1.mzXML Peak area"] = 0
     qt.set_index("row ID", inplace=True)
-    qt.to_csv(GENERATED_DIR_INPUT_GNPS / "Quantification table.csv")
+    qt.to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
+
+def compute_isdb():
+    GENERATED_DIR_ISDB.mkdir(parents=True, exist_ok=True)
+
+    mgf = MgfInstance(GENERATED_DIR_INPUTS / "All GNPS.mgf")
+    l = get_cfm_annotation(mgf)
+    inchis = pd.Series({k: m.inchi for (k, m) in l.items()})
+    scores = pd.Series({k: m.score for (k, m) in l.items()})
+    df = pd.DataFrame({"InChI": inchis, "Score": scores})
+    df.index.name = "Id"
+    df.to_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
 
 def generate_summary():
     GENERATED_DIR_SUMMARY.mkdir(parents=True, exist_ok=True)
@@ -94,8 +107,12 @@ def generate_summary():
     iterated_np_by_id = {id: GnpsIteratedNp(iterated_np_by_id_dict[id]) for id in ids}
     best_match_discounted_by_id = {i: v.best_match_discounted() if v is not None else None for (i, v) in iterated_np_by_id.items()}
     print(best_match_discounted_by_id)
-    compounds_joined["Gnps iterated inchi"] = pd.Series({i: (Chem.inchi.MolToInchi(v.inchi) if v is not None else None) for (i, v) in best_match_discounted_by_id.items()})
-    compounds_joined["Gnps iterated discounted score"] = pd.Series({i: v.score if v is not None else None for (i, v) in best_match_discounted_by_id.items()})
+    compounds_joined["InChI GNPS iterated"] = pd.Series({i: (Chem.inchi.MolToInchi(v.inchi) if v is not None else None) for (i, v) in best_match_discounted_by_id.items()})
+    compounds_joined["Score GNPS iterated discounted"] = pd.Series({i: v.score if v is not None else None for (i, v) in best_match_discounted_by_id.items()})
+    
+    isdb_df = pd.read_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t").set_index("Id").rename(columns={"InChI": "InChI ISDB", "Score": "Score ISDB"})
+    compounds_joined = compounds_joined.join(isdb_df)
+
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
     
 def main():
