@@ -3,4 +3,4 @@
 Generates data from the files available in this repository, in order to ease processing.
 
 == Instructions
-Install https://hatch.pypa.io/[hatch], clone this folder, and run `hatch run extractor`.
+Install https://hatch.pypa.io/[hatch], clone this folder, install MS2DECIDE, run `hatch run extractor`.
