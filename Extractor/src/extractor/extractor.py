@@ -86,7 +86,7 @@ def generate_summary():
         task_df = isc.inchis_scores_df
         compounds_joined = compounds_joined.join(task_df)
 
-    compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.csv")
+    compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
 
 def main():
     # todo
