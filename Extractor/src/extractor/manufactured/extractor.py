@@ -100,31 +100,10 @@ def generate_summary():
     ts = GnpsTasks(GENERATED_DIR_SUMMARY / "Fetched/", task_ids)
     ts.load()
     compounds_joined = compounds_by_id.join(ts.inchis_scores_df())
+
     best_match_discounted_by_id = ts.best_matches_discounted()
-    # iterated_np_by_id_dict = {id: {} for id in ids}
-    # for task_id in task_ids:
-    #     all_annotations = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_annotations(task_id)
-    #     parameters_file = GnpsCacher(GENERATED_DIR_SUMMARY / "Fetched/").cache_retrieve_parameters(task_id)
-    #     isc = GnpsInchiScore(all_annotations, GnpsParametersFile(parameters_file))
-    #     assert isc.inchis.index.isin(ids).all()
-    #     assert isc.scores.index.isin(ids).all()
-    #     for id in ids:
-    #         match = isc.match(id)
-    #         iterated_np_by_id_dict[id][isc.attempt] = match.to_readable() if match is not None else None
-    #     print(f"Joining task {task_id}, min peaks {isc.min_peaks}, max delta mass {isc.max_delta_mass}")
-    #     task_df = isc.inchis_scores_df
-    #     compounds_joined = compounds_joined.join(task_df)
-
-    # iterated_np_by_id = {id: GnpsIteratedNp(iterated_np_by_id_dict[id]) for id in ids}
-    # best_match_discounted_by_id = {
-    #     i: v.best_match_discounted() if v is not None else None for (i, v) in iterated_np_by_id.items()
-    # }
-
     compounds_joined["InChI GNPS iterated"] = pd.Series(
-        {
-            i: (v.inchi if v is not None else None)
-            for (i, v) in best_match_discounted_by_id.items()
-        }
+        {i: v.inchi if v is not None else None for (i, v) in best_match_discounted_by_id.items()}
     )
     compounds_joined["Score GNPS iterated discounted"] = pd.Series(
         {i: v.score if v is not None else None for (i, v) in best_match_discounted_by_id.items()}
@@ -189,10 +168,24 @@ def generate_summary():
     k_df = pd.Series(k_by_id, name="K")
     compounds_joined = compounds_joined.join(k_df)
 
-    add_ranks_columns(compounds_joined, "Rank min GNPS original", "Rank max GNPS original", "Ranks GNPS original", "Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02")
-    add_ranks_columns(compounds_joined, "Rank min GNPS iterated", "Rank max GNPS iterated", "Ranks GNPS iterated", "Score GNPS iterated discounted")
+    add_ranks_columns(
+        compounds_joined,
+        "Rank min GNPS original",
+        "Rank max GNPS original",
+        "Ranks GNPS original",
+        "Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
+    )
+    add_ranks_columns(
+        compounds_joined,
+        "Rank min GNPS iterated",
+        "Rank max GNPS iterated",
+        "Ranks GNPS iterated",
+        "Score GNPS iterated discounted",
+    )
     add_ranks_columns(compounds_joined, "Rank min Sirius", "Rank max Sirius", "Ranks Sirius", "Score Sirius")
-    add_ranks_columns(compounds_joined, "Rank min ISDB-LOTUS", "Rank max ISDB-LOTUS", "Ranks ISDB-LOTUS", "Score ISDB-LOTUS")
+    add_ranks_columns(
+        compounds_joined, "Rank min ISDB-LOTUS", "Rank max ISDB-LOTUS", "Ranks ISDB-LOTUS", "Score ISDB-LOTUS"
+    )
     add_ranks_columns(compounds_joined, "Rank min K", "Rank max K", "Ranks K", "K")
 
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
@@ -204,6 +197,7 @@ def generate_summary():
 
     by_k = compounds_joined.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]].sort_values("Ranks K")
     by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
+
 
 def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_column, score_column):
     compounds_joined[rank_min_column] = (
@@ -221,10 +215,15 @@ def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_
         axis=1,
     )
 
+
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
     compounds = pd.read_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t").set_index("Id")
     assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
-    by_k = compounds.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]].sort_values("Ranks K").rename({"Ranks K": "Rank K"}, axis=1)
-    compounds.rename(columns = lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
-    by_k.rename(columns = lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
+    by_k = (
+        compounds.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
+        .sort_values("Ranks K")
+        .rename({"Ranks K": "Rank K"}, axis=1)
+    )
+    compounds.rename(columns=lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
+    by_k.rename(columns=lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
