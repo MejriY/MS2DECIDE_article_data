@@ -12,6 +12,7 @@ from ms2decide.ClosestGNPS import _get_iterative_parameters
 
 DISCOUNTS = _get_iterative_parameters()
 
+
 class GnpsAnnotations:
     def __init__(self, json_raw_data: str):
         self.json_raw_data = json_raw_data
@@ -19,20 +20,41 @@ class GnpsAnnotations:
     def from_file(json_file: str | os.PathLike):
         with open(json_file) as json_data:
             return GnpsAnnotations(json_data.read())
-    
+
     def df(self):
         js = json.loads(self.json_raw_data)
         assert len(js) == 1
-        (k, v), = js.items()
-        if(len(v) == 0):
+        ((k, v),) = js.items()
+        if len(v) == 0:
             return pd.DataFrame()
         df = pd.DataFrame(v)
         return df
-    
+
     def summary(self):
-        summary = self.df().loc[:, ["#Scan#", "Adduct", "ExactMass", "Precursor_MZ", "SpecMZ", "Charge", "SpecCharge", "MQScore", "INCHI", "INCHI_AUX", "InChIKey", "Smiles"]].rename(columns = {"#Scan#": "Id"})
+        summary = (
+            self.df()
+            .loc[
+                :,
+                [
+                    "#Scan#",
+                    "Adduct",
+                    "ExactMass",
+                    "Precursor_MZ",
+                    "SpecMZ",
+                    "Charge",
+                    "SpecCharge",
+                    "MQScore",
+                    "INCHI",
+                    "INCHI_AUX",
+                    "InChIKey",
+                    "Smiles",
+                ],
+            ]
+            .rename(columns={"#Scan#": "Id"})
+        )
         summary["Id"] = summary["Id"].astype(int)
         return summary.set_index("Id").sort_index()
+
 
 class GnpsParametersFile:
     def __init__(self, xml_file: str | os.PathLike):
@@ -51,7 +73,8 @@ class GnpsParametersFile:
 
             d = {p.attrib["name"]: p.text for p in root if p.attrib["name"] not in dupls}
             return d
-        
+
+
 class GnpsFetcher:
     def fetch(task_id: str):
         url = f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_annotations_DB"
@@ -61,7 +84,7 @@ class GnpsFetcher:
 
     def fetch_and_save(task_id: str, path: str | os.PathLike):
         json_data = GnpsFetcher.fetch(task_id)
-        if(GnpsAnnotations(json_data).df().empty):
+        if GnpsAnnotations(json_data).df().empty:
             print(f"Warning: task {task_id} has no annotations; not saving it.")
         else:
             with open(path, "wb") as f:
@@ -77,11 +100,12 @@ class GnpsFetcher:
     def fetch_parameters_and_save(task_id: str, path: str | os.PathLike):
         with open(path, "wb") as f:
             f.write(GnpsFetcher.fetch_parameters(task_id))
-    
+
+
 class GnpsCacher:
     def __init__(self, cache_dir: str | os.PathLike):
         self.cache_dir = cache_dir
-        
+
     def cache_retrieve_annotations(self, task_id: str):
         os.makedirs(self.cache_dir, exist_ok=True)
         path = self.cache_dir / f"{task_id}.json"
@@ -91,57 +115,61 @@ class GnpsCacher:
         else:
             json_data = GnpsFetcher.fetch_and_save(task_id, path)
         return GnpsAnnotations(json_data)
-    
+
     def cache_retrieve_parameters(self, task_id: str):
         os.makedirs(self.cache_dir, exist_ok=True)
         path = self.cache_dir / f"{task_id}.xml"
         if not path.exists():
             GnpsFetcher.fetch_parameters_and_save(task_id, path)
         return path
-    
+
+
 class GnpsInchiScore:
     def __init__(self, all_annotations: GnpsAnnotations, parameters: GnpsParametersFile):
-        if(all_annotations.df().empty):
+        if all_annotations.df().empty:
             self.summary = pd.DataFrame()
         else:
             self.summary = all_annotations.summary()
         ps = parameters.params()
         self.min_peaks = int(ps["MIN_MATCHED_PEAKS_SEARCH"])
         self.max_delta_mass = float(ps["MAX_SHIFT_MASS"])
-    
+        assert self.inchis.index.isin(self.scores.index).all()
+        assert self.smiles.index.isin(self.scores.index).all()
+
     @property
     def ids(self):
         return self.summary.index
-    
+
     @property
     def inchis(self):
-        if(self.summary.empty):
+        if self.summary.empty:
             return pd.Series()
         return self.summary.loc[:, "INCHI"]
-    
+
     @property
     def smiles(self):
-        if(self.summary.empty):
+        if self.summary.empty:
             return pd.Series()
         return self.summary.loc[:, "Smiles"]
-    
+
     @property
     def inchis_smiles_df(self):
-        new_cols = {
-            "INCHI": self.inchis,
-            "Smiles": self.smiles
-        }
+        new_cols = {"INCHI": self.inchis, "Smiles": self.smiles}
         return pd.DataFrame(new_cols)
-    
+
     def standard_inchis(self):
-        return self.inchis_smiles_df.apply(lambda x: GnpsInchiSmiles(x["INCHI"], x["Smiles"]).to_standard_inchi(), axis=1)
-    
+        if not hasattr(self, "_standard_inchis"):
+            self._standard_inchis = self.inchis_smiles_df.apply(
+                lambda x: GnpsInchiSmiles(x["INCHI"], x["Smiles"]).to_standard_inchi(), axis=1
+            )
+        return self._standard_inchis
+
     @property
     def scores(self):
-        if(self.summary.empty):
-            return pd.Series()
-        return self.summary.loc[:, "MQScore"]
-    
+        if self.summary.empty:
+            return pd.Series().astype(float)
+        return self.summary.loc[:, "MQScore"].astype(float)
+
     @property
     def inchis_scores_df(self):
         new_cols = {
@@ -154,22 +182,25 @@ class GnpsInchiScore:
 
     @property
     def attempt(self):
-        return GnpsIterativeAttempt(self.min_peaks, self.max_delta_mass if self.max_delta_mass != 0 else float('inf'))
-    
-    def match(self, id: int):
-        if(id not in self.ids):
-            return None
-        return GnpsMatch(self.summary.loc[id, "INCHI"], self.summary.loc[id, "Smiles"], float(self.scores[id]))
+        return GnpsIterativeAttempt(self.min_peaks, self.max_delta_mass if self.max_delta_mass != 0 else float("inf"))
 
+    def short_matches(self):
+        if not hasattr(self, "_short_matches_dict"):
+            self._short_matches_dict = {id: GnpsReadableMatch(self.standard_inchis()[id], self.scores[id]) for id in self.ids}
+        return self._short_matches_dict
+
+
+# Still need to find out how to order descending by min peaks.
 @dataclass(frozen=True, order=True)
 class GnpsIterativeAttempt:
     min_peaks: int
     max_delta_mass: float
-    
+
     @property
     def discount(self):
         return DISCOUNTS[self.min_peaks][self.max_delta_mass]
-    
+
+
 @dataclass(frozen=True)
 class GnpsInchiSmiles:
     inchi: str
@@ -177,53 +208,103 @@ class GnpsInchiSmiles:
 
     def sanitized_inchi(self):
         removed = self.inchi.replace('"', "").strip()
-        if(not removed.startswith("InChI=")):
+        if not removed.startswith("InChI="):
             return "InChI=" + removed
         return removed
-    
+
     def to_mol(self):
         i = Chem.inchi.MolFromInchi(self.sanitized_inchi())
-        if(i is None):
+        if i is None:
             mol = Chem.MolFromSmiles(self.smiles)
         else:
             mol = i
         return mol
-    
+
     def to_standard_inchi(self):
         mol = self.to_mol()
-        if(mol is None):
+        if mol is None:
             return None
         return Chem.inchi.MolToInchi(mol)
-    
-@dataclass(frozen=True)
-class GnpsMatch:
-    inchi: str
-    smiles: str
-    score: float
-    
-    @property
-    def to_inchi_smiles(self):
-        return GnpsInchiSmiles(self.inchi, self.smiles)
-    
-    def sanitized_inchi(self):
-        return self.to_inchi_smiles.sanitized_inchi()
-    
-    def to_readable(self):
-        mol = self.to_inchi_smiles.to_mol()
-        return GnpsReadableMatch(mol, self.score)
-    
+
+
 @dataclass(frozen=True)
 class GnpsReadableMatch:
     inchi: Mol | None
     score: float
-    
+
+
 class GnpsIteratedNp:
     def __init__(self, match_by_attempt: dict[GnpsIterativeAttempt, GnpsReadableMatch]):
         self.match_by_attempt = match_by_attempt
-    
+
     def best_match_discounted(self):
-        for attempt in self.match_by_attempt.keys():
+        ordered_attempts = sorted(self.match_by_attempt.keys(), key=lambda x: (-x.min_peaks, x.max_delta_mass))
+        for attempt in ordered_attempts:
             match = self.match_by_attempt[attempt]
-            if(match is not None and match.inchi is not None):
+            if match is not None and match.inchi is not None:
                 # print(f"Best match for {attempt} with discount {attempt.discount}: {match.inchi} with score {match.score} of type {type(match.score)}")
                 return GnpsReadableMatch(match.inchi, match.score * attempt.discount)
+
+
+@dataclass
+class GnpsTask:
+    cache_dir: Path
+    task_id: str
+
+    def load(self):
+        all_annotations = GnpsCacher(self.cache_dir).cache_retrieve_annotations(self.task_id)
+        parameters_file = GnpsCacher(self.cache_dir).cache_retrieve_parameters(self.task_id)
+        self.isc = GnpsInchiScore(all_annotations, GnpsParametersFile(parameters_file))
+
+    def inchis_scores_df(self):
+        return self.isc.inchis_scores_df
+
+    @property
+    def attempt(self):
+        return self.isc.attempt
+
+    def __eq__(self, other):
+        return self.task_id == other.task_id
+    def __hash__(self):
+        return hash(self.task_id)
+        
+@dataclass
+class GnpsTasks:
+    cache_dir: Path
+    task_ids: set[str]
+
+    def load(self):
+        self.tasks = {task_id: GnpsTask(self.cache_dir, task_id) for task_id in self.task_ids}
+        for task in self.tasks.values():
+            task.load()
+
+    def inchis_scores_df(self):
+        tasks = self.tasks.values()
+        # for expected ordering
+        by_attempt = {task.isc.attempt: task for task in tasks}
+        ordered_attempts = sorted(by_attempt.keys(), key=lambda x: (-x.min_peaks, x.max_delta_mass))
+        return pd.concat([by_attempt[attempt].inchis_scores_df() for attempt in ordered_attempts], axis=1)
+
+    def _match_by_attempt_dict(self, id):
+        match_by_attempt = {}
+        for task in self.tasks.values():
+            short_match_results = task.isc.short_matches()
+            if(id not in short_match_results.keys()):
+                match = None
+            else:
+                match = short_match_results[id]
+            if match is not None:
+                match_by_attempt[task.isc.attempt] = match
+        return match_by_attempt
+
+    def _best_match_discounted(self, id):
+        match_by_attempt = self._match_by_attempt_dict(id)
+        if(id == 1):
+            print(f"Match by attempt for {id}: {match_by_attempt}")
+        return GnpsIteratedNp(match_by_attempt).best_match_discounted()
+
+    def ids(self):
+        return self.inchis_scores_df().index
+    
+    def best_matches_discounted(self):
+        return {id: self._best_match_discounted(id) for id in self.ids()}
