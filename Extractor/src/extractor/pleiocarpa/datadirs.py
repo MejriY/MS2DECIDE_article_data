@@ -3,7 +3,8 @@ from pathlib import Path
 REPO_DIR = Path("../")
 
 GENERATED_DIR = REPO_DIR / "Generated/" / "Pleiocarpa case/"
-GENERATED_DIR_SUMMARY = GENERATED_DIR / "4 - Summary/"
+GENERATED_DIR_ISDB = GENERATED_DIR / "6 - ISDB-LOTUS/"
+GENERATED_DIR_SUMMARY = GENERATED_DIR / "7 - Summary/"
 
 GENERATED_DIR_ARTICLE = REPO_DIR / "../" / "Article/" / "Generated/"
 

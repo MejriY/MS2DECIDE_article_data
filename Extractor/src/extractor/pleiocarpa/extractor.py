@@ -28,7 +28,20 @@ def generate_summary():
 
     ts = GnpsTasks(GENERATED_DIR_SUMMARY / "Fetched/", task_ids)
     ts.load()
-    ts.all_matches().to_csv(GENERATED_DIR_SUMMARY / "All matches.tsv", sep="\t")
+    compounds_joined = ts.all_matches()
 
+    sirius_df = pd.read_csv(INPUT_DIR_SIRIUS / "structure_identifications.tsv", sep="\t").set_index("mappingFeatureId")
+    sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
+    sirius_df = sirius_df.rename(columns={"InChI": "InChI Sirius"}).loc[:, ["InChI Sirius", "Score Sirius"]]
+    compounds_joined = compounds_joined.join(sirius_df)
+
+    isdb_df = (
+        pd.read_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
+        .set_index("Id")
+        .rename(columns={"InChI": "InChI ISDB-LOTUS", "Score": "Score ISDB-LOTUS"})
+    )
+    compounds_joined = compounds_joined.join(isdb_df)
+
+    compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "All matches.tsv", sep="\t")
 
 generate_summary()
