@@ -192,6 +192,14 @@ def generate_summary():
 
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
 
+    yassine_values = pd.read_csv(GENERATED_DIR / "output gnps with new file" / "Manufactured annotation.tsv", sep="\t").set_index("ID")
+    yassine_values.columns = yassine_values.columns.to_series().apply(lambda x: x + " Yassine")
+    compounds_and_yassine = compounds_joined.join(yassine_values)
+    compounds_and_yassine["K - K Yassine"] = (compounds_and_yassine["K"] - compounds_and_yassine["K Yassine"]).apply(lambda x: round(x, 5))
+    compounds_and_yassine["Rank max K - ranking by k Yassine"] = compounds_and_yassine["Rank max K"] - compounds_and_yassine["ranking by k Yassine"]
+
+    compounds_and_yassine.to_csv(GENERATED_DIR_SUMMARY / "Compounds and Yassine.tsv", sep="\t")
+
 
 def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_column, score_column):
     compounds_joined[rank_min_column] = (
