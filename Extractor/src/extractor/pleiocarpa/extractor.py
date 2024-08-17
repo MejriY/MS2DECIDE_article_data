@@ -38,13 +38,63 @@ def transform_isdb():
 def generate_summary():
     GENERATED_DIR_SUMMARY.mkdir(parents=True, exist_ok=True)
 
+    mgf_file_1 = INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf"
+    spectra_from_mgf_file_1 = list(matchms.importing.load_from_mgf(str(mgf_file_1)))
+    ms_1 = [s.metadata for s in spectra_from_mgf_file_1]
+    df_1 = pd.DataFrame(ms_1).set_index("feature_id")
+    assert (df_1.index == df_1["scans"]).all()
+    df_1 = df_1.drop(columns=["scans"])
+    df_1 = df_1.rename(lambda x: x + " raw", axis=1).rename(columns={"charge raw": "Charge raw", "ms_level raw": "MS level raw"})
+
+    mgf_file_2 = INPUT_DIR / "2 - MZmine" / "Pleiocarpa_sirius.mgf"
+    spectra_from_mgf_file_2 = list(matchms.importing.load_from_mgf(str(mgf_file_2)))
+    ms_2 = [s.metadata for s in spectra_from_mgf_file_2]
+    df_2 = pd.DataFrame(ms_2)
+    df_2_orig_features = set(df_2["feature_id"].astype(int))
+    corr = df_2["spectype"] == "CORRELATED MS"
+    l1 = (df_2["ms_level"] == "1")
+    to_remove = df_2[corr & l1].index
+    df_2 = df_2.drop(to_remove)
+    df_2_remaining_features = set(df_2["feature_id"].astype(int))
+    assert df_2_orig_features == df_2_remaining_features
+    assert df_2["spectype"].isna().all()
+    del df_2["spectype"]
+    assert df_2["file_name"].isna().all()
+    del df_2["file_name"]
+    del df_2["num_peaks"]
+    nb_rep = df_2.groupby("feature_id").nunique()
+    features_with_repeated_ms_level = nb_rep[nb_rep["ms_level"] > 1].index
+    l2 = (df_2["ms_level"] == "2")
+    ft_rep_lines = df_2["feature_id"].isin(set(features_with_repeated_ms_level))
+    to_remove = df_2[l2 & ft_rep_lines].index
+    df_2 = df_2.drop(to_remove)
+    max_repetitions = df_2.groupby("feature_id").nunique().max()
+    assert max_repetitions.max() == 1
+    df_2 = df_2.drop_duplicates()
+    df_2_remaining_features = set(df_2["feature_id"].astype(int))
+    assert df_2_orig_features == df_2_remaining_features
+    assert (df_2["feature_id"] == df_2["scans"]).all()
+    df_2 = df_2.drop(columns=["scans"])
+    df_2 = df_2.set_index("feature_id").rename(lambda x: x + " Sirius", axis=1).rename(columns={"charge Sirius": "Charge Sirius", "ms_level Sirius": "MS level Sirius"})
+
+    assert len(df_1) == len(df_2)
+    compounds_joined = pd.concat([df_1, df_2], axis=1)
+    compounds_joined.index = compounds_joined.index.astype(int)
+    assert (abs(compounds_joined["retention_time raw"] - compounds_joined["retention_time Sirius"]) <= 0.005).all()
+    compounds_joined = compounds_joined.drop(columns=["retention_time Sirius"]).rename(columns={"retention_time raw": "Retention time"})
+    assert (abs(compounds_joined["precursor_mz raw"] - compounds_joined["precursor_mz Sirius"]) <= 0.0005).all()
+    compounds_joined = compounds_joined.drop(columns=["precursor_mz Sirius"]).rename(columns={"precursor_mz raw": "Precursor m/z"})
+    assert len(compounds_joined.columns) == 6
+    compounds_joined.columns = ["Precursor m/z", "Retention time", "Charge raw", "Charge Sirius", "MS level raw", "MS level Sirius"]
+    compounds_joined.index.name = "Id"
+
     task_ids_file = INPUT_DIR_GNPS_TASKS / "Gnps task ids.json"
     with open(task_ids_file) as task_ids_data:
         task_ids = set(json.load(task_ids_data))
 
     ts = GnpsTasks(GENERATED_DIR_SUMMARY / "Fetched/", task_ids)
     ts.load()
-    compounds_joined = ts.all_matches()
+    compounds_joined = compounds_joined.join(ts.all_matches())
 
     sirius_df = pd.read_csv(INPUT_DIR_SIRIUS / "structure_identifications.tsv", sep="\t").set_index("mappingFeatureId")
     sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
@@ -85,9 +135,12 @@ def generate_summary():
         if pd.isna(inchi_s):
             assert tgs == 0
             assert tsi == 0
+        if pd.isna(inchi_i):
+            assert tgi == 0
+            assert tsi == 0
+        if pd.isna(inchi_s):
             tgs = 0.25
             tsi = 0.25
-        assert not pd.isna(inchi_i)
         tanimotos_by_id[id] = tanimotos
         tanimoto_values_by_id[id] = {"tgs": tgs, "tgi": tgi, "tsi": tsi}
 
