@@ -187,7 +187,7 @@ def generate_summary():
     counts.name = "Count"
     counts.to_csv(GENERATED_DIR_SUMMARY / "Counts.tsv", sep="\t")
 
-    by_k = compounds_joined.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]].sort_values("Ranks K")
+    by_k = compounds_joined.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
 
 # compute_isdb()

@@ -188,7 +188,7 @@ def generate_summary():
     counts.name = "Count"
     counts.to_csv(GENERATED_DIR_SUMMARY / "Counts.tsv", sep="\t")
 
-    by_k = compounds_joined.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]].sort_values("Ranks K")
+    by_k = compounds_joined.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
 
 
@@ -198,8 +198,8 @@ def generate_article_data():
     compounds = pd.read_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t").set_index("Id")
     assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
     by_k = (
-        compounds.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
-        .sort_values("Ranks K")
+        compounds
+        .sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
         .rename({"Ranks K": "Rank K"}, axis=1)
     )
     compounds.rename(columns=lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
