@@ -4,7 +4,7 @@ from ms2decide.AuthMail import AuthMail
 from datetime import datetime
 from pathlib import Path
 import json
-from extractor.datadirs import *
+from extractor.manufactured.datadirs import *
 
 def send():
     GENERATED_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)

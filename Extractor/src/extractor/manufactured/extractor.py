@@ -16,7 +16,7 @@ from ms2decide.IsdbAnnotation import get_cfm_annotation
 from ms2decide.K import K
 from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
-from extractor.datadirs import *
+from extractor.manufactured.datadirs import *
 
 
 def clean():
