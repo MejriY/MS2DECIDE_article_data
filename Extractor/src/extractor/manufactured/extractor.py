@@ -8,6 +8,7 @@ from extractor.gnps import GnpsParametersFile
 from extractor.gnps import GnpsInchiScore
 from extractor.gnps import GnpsTasks
 from extractor.mgfs import MgfFiles
+from extractor.support import add_ranks_columns
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 import matchms
@@ -190,22 +191,6 @@ def generate_summary():
     by_k = compounds_joined.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]].sort_values("Ranks K")
     by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
 
-
-def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_column, score_column):
-    compounds_joined[rank_min_column] = (
-        compounds_joined[score_column].astype(float).fillna(0).rank(method="min").astype(int)
-    )
-    compounds_joined[rank_max_column] = (
-        compounds_joined[score_column].astype(float).fillna(0).rank(method="max").astype(int)
-    )
-    compounds_joined[ranks_column] = compounds_joined.apply(
-        lambda x: (
-            str(x[rank_min_column])
-            if x[rank_min_column] == x[rank_max_column]
-            else (str(x[rank_min_column]) + "–" + str(x[rank_max_column]))
-        ),
-        axis=1,
-    )
 
 
 def generate_article_data():
