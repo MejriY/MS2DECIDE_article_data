@@ -85,7 +85,7 @@ def generate_summary():
     assert (abs(compounds_joined["precursor_mz raw"] - compounds_joined["precursor_mz Sirius"]) <= 0.0005).all()
     compounds_joined = compounds_joined.drop(columns=["precursor_mz Sirius"]).rename(columns={"precursor_mz raw": "Precursor m/z"})
     assert len(compounds_joined.columns) == 6
-    compounds_joined.columns = ["Precursor m/z", "Retention time", "Charge raw", "Charge Sirius", "MS level raw", "MS level Sirius"]
+    compounds_joined = compounds_joined.reindex(columns = ["Precursor m/z", "Retention time", "Charge raw", "Charge Sirius", "MS level raw", "MS level Sirius"])
     compounds_joined.index.name = "Id"
 
     task_ids_file = INPUT_DIR_GNPS_TASKS / "Gnps task ids.json"
