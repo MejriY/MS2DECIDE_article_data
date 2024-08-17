@@ -19,6 +19,21 @@ from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
 from extractor.pleiocarpa.datadirs import *
 
+def compute_isdb():
+    GENERATED_DIR_ISDB.mkdir(parents=True, exist_ok=True)
+
+    mgf = MgfInstance(INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf")
+    l = get_cfm_annotation(mgf)
+    inchis = pd.Series({k: m.inchi for (k, m) in l.items()})
+    scores = pd.Series({k: m.score for (k, m) in l.items()})
+    df = pd.DataFrame({"InChI": inchis, "Score": scores})
+    df.index.name = "Id"
+    df.to_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
+
+def transform_isdb():
+    df = pd.read_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t").set_index("Id")
+    df.replace({"#": None}).to_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
+
 def generate_summary():
     GENERATED_DIR_SUMMARY.mkdir(parents=True, exist_ok=True)
 
@@ -44,4 +59,6 @@ def generate_summary():
 
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "All matches.tsv", sep="\t")
 
+# compute_isdb()
+# transform_isdb()
 generate_summary()
