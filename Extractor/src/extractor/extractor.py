@@ -192,15 +192,6 @@ def generate_summary():
 
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
 
-    yassine_values = pd.read_csv(GENERATED_DIR / "output gnps with new file" / "Manufactured annotation.tsv", sep="\t").set_index("ID")
-    yassine_values.columns = yassine_values.columns.to_series().apply(lambda x: x + " Yassine")
-    compounds_and_yassine = compounds_joined.join(yassine_values)
-    compounds_and_yassine["K - K Yassine"] = (compounds_and_yassine["K"] - compounds_and_yassine["K Yassine"]).apply(lambda x: round(x, 5))
-    compounds_and_yassine["Rank max K - ranking by k Yassine"] = compounds_and_yassine["Rank max K"] - compounds_and_yassine["ranking by k Yassine"]
-
-    compounds_and_yassine.to_csv(GENERATED_DIR_SUMMARY / "Compounds and Yassine.tsv", sep="\t")
-
-
 def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_column, score_column):
     compounds_joined[rank_min_column] = (
         compounds_joined[score_column].astype(float).fillna(0).rank(method="min").astype(int)
@@ -217,12 +208,3 @@ def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_
         axis=1,
     )
 
-
-def compute():
-    dict_inchi = {
-        "GNPS": "InChI=1S/C43H54N4O6/c1-7-23-17-25-20-43(22-53-52-6)39-28(15-16-47(40(23)43)41(25)48)27-13-14-34(50-4)36(38(27)45-39)31-18-29-24(8-2)21-46(3)33(35(29)42(49)51-5)19-30-26-11-9-10-12-32(26)44-37(30)31/h9-14,23-25,29,31,33,35,40-41,44-45,48H,7-8,15-21H2,1-6H3/t23-,24+,25-,29-,31-,33-,35?,40-,41?,43?/m0/s1",
-        "ISDB": "InChI=1S/C23H27N2O3/c1-25-8-7-23-16-4-2-3-5-17(16)24-20(26)11-18-21(22(23)24)15(10-19(23)28-13-25)14(12-25)6-9-27-18/h2-6,15,18-19,21-22H,7-13H2,1H3/q+1",
-        "SIRIUS": "InChI=1S/C43H52N4O5/c1-7-24-15-23-20-43(42(49)52-6)39-27(13-14-47(21-23)40(24)43)29-17-30(36(50-4)19-34(29)45-39)31-16-28-25(8-2)22-46(3)35(37(28)41(48)51-5)18-32-26-11-9-10-12-33(26)44-38(31)32/h8-12,17,19,23-24,28,31,35,37,40,44-45H,7,13-16,18,20-22H2,1-6H3",
-    }
-
-    tanimotos = Tanimotos(dict_inchi)
