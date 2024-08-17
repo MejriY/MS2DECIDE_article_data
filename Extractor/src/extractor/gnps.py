@@ -299,8 +299,6 @@ class GnpsTasks:
 
     def _best_match_discounted(self, id):
         match_by_attempt = self._match_by_attempt_dict(id)
-        if(id == 1):
-            print(f"Match by attempt for {id}: {match_by_attempt}")
         return GnpsIteratedNp(match_by_attempt).best_match_discounted()
 
     def ids(self):
@@ -308,3 +306,17 @@ class GnpsTasks:
     
     def best_matches_discounted(self):
         return {id: self._best_match_discounted(id) for id in self.ids()}
+    
+    def _best_matches_inchi_series(self):
+        return pd.Series(
+        {i: v.inchi if v is not None else None for (i, v) in self.best_matches_discounted().items()}, name="InChI GNPS iterated"
+    )
+    def _best_matches_scores_series(self):
+        return pd.Series(
+        {i: v.score if v is not None else None for (i, v) in self.best_matches_discounted().items()}, name="Score GNPS iterated discounted"
+    )
+    def best_matches_df(self):
+        return pd.concat([self._best_matches_inchi_series(), self._best_matches_scores_series()], axis=1)
+    
+    def all_matches(self):
+        return pd.concat([self.inchis_scores_df(), self.best_matches_df()], axis=1)

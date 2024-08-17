@@ -99,15 +99,7 @@ def generate_summary():
 
     ts = GnpsTasks(GENERATED_DIR_SUMMARY / "Fetched/", task_ids)
     ts.load()
-    compounds_joined = compounds_by_id.join(ts.inchis_scores_df())
-
-    best_match_discounted_by_id = ts.best_matches_discounted()
-    compounds_joined["InChI GNPS iterated"] = pd.Series(
-        {i: v.inchi if v is not None else None for (i, v) in best_match_discounted_by_id.items()}
-    )
-    compounds_joined["Score GNPS iterated discounted"] = pd.Series(
-        {i: v.score if v is not None else None for (i, v) in best_match_discounted_by_id.items()}
-    )
+    compounds_joined = compounds_by_id.join(ts.all_matches())
 
     sirius_df = pd.read_csv(SIRIUS_DIR / "structure_identifications.tsv", sep="\t").set_index("mappingFeatureId")
     sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
