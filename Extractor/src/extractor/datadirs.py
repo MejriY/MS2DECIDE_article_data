@@ -7,4 +7,5 @@ GENERATED_DIR_GNPS_TASKS = REPO_DIR/"Generated/" / "Manufactured case/" / "2 - G
 SIRIUS_DIR = REPO_DIR/"Manufactured case/" / "Sirius/"
 GENERATED_DIR_ISDB = REPO_DIR/"Generated/" / "Manufactured case/" / "3 - ISDB-LOTUS/"
 GENERATED_DIR_SUMMARY = REPO_DIR/"Generated/" / "Manufactured case/" / "4 - Summary/"
+GENERATED_DIR_ARTICLE = REPO_DIR/"../" / "Article/" / "Generated/"
 INPUT_DIR = REPO_DIR / "Manufactured case/"

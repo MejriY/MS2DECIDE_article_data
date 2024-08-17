@@ -208,3 +208,26 @@ def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_
         axis=1,
     )
 
+def gen_article_data():
+    GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
+    compounds_joined = pd.read_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t").set_index("Id")
+    compounds_joined["Retention time"] = compounds_joined["Retention time"] / 60.0
+    compounds_joined["Precursor m/z"] = compounds_joined["Precursor m/z"].round(4)
+    compounds_joined["Relative molecular weight"] = compounds_joined["Relative molecular weight"].round(4)
+    compounds_joined["Precursor m/z − relative molecular weight"] = compounds_joined["Precursor m/z − relative molecular weight"].round(4)
+    compounds_joined["Score GNPS iterated discounted"] = compounds_joined["Score GNPS iterated discounted"].round(4)
+    compounds_joined["Score Sirius"] = compounds_joined["Score Sirius"].round(4)
+    compounds_joined["Score ISDB-LOTUS"] = compounds_joined["Score ISDB-LOTUS"].round(4)
+    compounds_joined["tgs"] = compounds_joined["tgs"].round(4)
+    compounds_joined["tgi"] = compounds_joined["tgi"].round(4)
+    compounds_joined["tsi"] = compounds_joined["tsi"].round(4)
+    compounds_joined["K"] = compounds_joined["K"].round(4)
+    compounds_joined["Rank min GNPS original"] = compounds_joined["Rank min GNPS original"].astype(str)
+    compounds_joined["Rank max GNPS original"] = compounds_joined["Rank max GNPS original"].astype(str)
+    compounds_joined["Ranks GNPS original"] = compounds_joined["Ranks GNPS original"].astype(str)
+    compounds_joined["Rank min GNPS iterated"] = compounds_joined["Rank min GNPS iterated"].astype(str)
+    compounds_joined["Rank max GNPS iterated"] = compounds_joined["Rank max GNPS iterated"].astype(str)
+    compounds_joined["Ranks GNPS iterated"] = compounds_joined["Ranks GNPS iterated"].astype(str)
+    compounds_joined["Rank min Sirius"] = compounds_joined["Rank min Sirius"].astype(str)
+    compounds_joined["Rank max Sirius"] = compounds_joined["Rank max Sirius"].astype(str)
+    compounds

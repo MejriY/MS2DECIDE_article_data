@@ -126,6 +126,17 @@ class GnpsInchiScore:
         return self.summary.loc[:, "Smiles"]
     
     @property
+    def inchis_smiles_df(self):
+        new_cols = {
+            "INCHI": self.inchis,
+            "Smiles": self.smiles
+        }
+        return pd.DataFrame(new_cols)
+    
+    def standard_inchis(self):
+        return self.inchis_smiles_df.apply(lambda x: GnpsInchiSmiles(x["INCHI"], x["Smiles"]).to_standard_inchi(), axis=1)
+    
+    @property
     def scores(self):
         if(self.summary.empty):
             return pd.Series()
@@ -136,6 +147,7 @@ class GnpsInchiScore:
         new_cols = {
             f"InChI GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.inchis,
             f"Smiles GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.smiles,
+            f"Standard InChI GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.standard_inchis(),
             f"Score GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.scores,
         }
         return pd.DataFrame(new_cols)
@@ -159,23 +171,45 @@ class GnpsIterativeAttempt:
         return DISCOUNTS[self.min_peaks][self.max_delta_mass]
     
 @dataclass(frozen=True)
-class GnpsMatch:
+class GnpsInchiSmiles:
     inchi: str
     smiles: str
-    score: float
-    
+
     def sanitized_inchi(self):
         removed = self.inchi.replace('"', "").strip()
         if(not removed.startswith("InChI=")):
             return "InChI=" + removed
         return removed
     
-    def to_readable(self):
+    def to_mol(self):
         i = Chem.inchi.MolFromInchi(self.sanitized_inchi())
         if(i is None):
             mol = Chem.MolFromSmiles(self.smiles)
         else:
             mol = i
+        return mol
+    
+    def to_standard_inchi(self):
+        mol = self.to_mol()
+        if(mol is None):
+            return None
+        return Chem.inchi.MolToInchi(mol)
+    
+@dataclass(frozen=True)
+class GnpsMatch:
+    inchi: str
+    smiles: str
+    score: float
+    
+    @property
+    def to_inchi_smiles(self):
+        return GnpsInchiSmiles(self.inchi, self.smiles)
+    
+    def sanitized_inchi(self):
+        return self.to_inchi_smiles.sanitized_inchi()
+    
+    def to_readable(self):
+        mol = self.to_inchi_smiles.to_mol()
         return GnpsReadableMatch(mol, self.score)
     
 @dataclass(frozen=True)
