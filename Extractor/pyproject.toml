@@ -13,6 +13,7 @@ clean = "extractor.extractor:clean"
 geninput = "extractor.extractor:generate_gnps_input"
 send = "extractor.sender:send"
 gensummary = "extractor.extractor:generate_summary"
+genarticle = "extractor.extractor:generate_article_data"
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"

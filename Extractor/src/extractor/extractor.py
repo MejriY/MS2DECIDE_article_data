@@ -197,6 +197,9 @@ def generate_summary():
     counts.name = "Count"
     counts.to_csv(GENERATED_DIR_SUMMARY / "Counts.tsv", sep="\t")
 
+    by_k = compounds_joined.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]].sort_values("Ranks K")
+    by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
+
 def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_column, score_column):
     compounds_joined[rank_min_column] = (
         compounds_joined[score_column].astype(float).fillna(0).rank(method="min").astype(int)
@@ -213,6 +216,10 @@ def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_
         axis=1,
     )
 
-def gen_article_data():
+def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
     compounds = pd.read_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t").set_index("Id")
+    assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
+    by_k = compounds.loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]].sort_values("Ranks K").rename({"Ranks K": "Rank K"}, axis=1)
+    compounds.rename(columns = lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
+    by_k.rename(columns = lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
