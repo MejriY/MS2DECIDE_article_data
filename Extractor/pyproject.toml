@@ -14,6 +14,7 @@ manuf-geninput = "extractor.manufactured.extractor:generate_gnps_input"
 manuf-send = "extractor.manufactured.sender:send"
 manuf-gensummary = "extractor.manufactured.extractor:generate_summary"
 manuf-genarticle = "extractor.manufactured.extractor:generate_article_data"
+pleio-gensummary = "extractor.pleiocarpa.extractor:generate_summary"
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
