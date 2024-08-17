@@ -192,6 +192,11 @@ def generate_summary():
 
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
 
+    counts = compounds_joined.filter(like="Standard InChI GNPS; ").agg("count")
+    counts.index.name = "Column"
+    counts.name = "Count"
+    counts.to_csv(GENERATED_DIR_SUMMARY / "Counts.tsv", sep="\t")
+
 def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_column, score_column):
     compounds_joined[rank_min_column] = (
         compounds_joined[score_column].astype(float).fillna(0).rank(method="min").astype(int)
@@ -210,24 +215,4 @@ def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_
 
 def gen_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
-    compounds_joined = pd.read_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t").set_index("Id")
-    compounds_joined["Retention time"] = compounds_joined["Retention time"] / 60.0
-    compounds_joined["Precursor m/z"] = compounds_joined["Precursor m/z"].round(4)
-    compounds_joined["Relative molecular weight"] = compounds_joined["Relative molecular weight"].round(4)
-    compounds_joined["Precursor m/z − relative molecular weight"] = compounds_joined["Precursor m/z − relative molecular weight"].round(4)
-    compounds_joined["Score GNPS iterated discounted"] = compounds_joined["Score GNPS iterated discounted"].round(4)
-    compounds_joined["Score Sirius"] = compounds_joined["Score Sirius"].round(4)
-    compounds_joined["Score ISDB-LOTUS"] = compounds_joined["Score ISDB-LOTUS"].round(4)
-    compounds_joined["tgs"] = compounds_joined["tgs"].round(4)
-    compounds_joined["tgi"] = compounds_joined["tgi"].round(4)
-    compounds_joined["tsi"] = compounds_joined["tsi"].round(4)
-    compounds_joined["K"] = compounds_joined["K"].round(4)
-    compounds_joined["Rank min GNPS original"] = compounds_joined["Rank min GNPS original"].astype(str)
-    compounds_joined["Rank max GNPS original"] = compounds_joined["Rank max GNPS original"].astype(str)
-    compounds_joined["Ranks GNPS original"] = compounds_joined["Ranks GNPS original"].astype(str)
-    compounds_joined["Rank min GNPS iterated"] = compounds_joined["Rank min GNPS iterated"].astype(str)
-    compounds_joined["Rank max GNPS iterated"] = compounds_joined["Rank max GNPS iterated"].astype(str)
-    compounds_joined["Ranks GNPS iterated"] = compounds_joined["Ranks GNPS iterated"].astype(str)
-    compounds_joined["Rank min Sirius"] = compounds_joined["Rank min Sirius"].astype(str)
-    compounds_joined["Rank max Sirius"] = compounds_joined["Rank max Sirius"].astype(str)
-    compounds
+    compounds = pd.read_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t").set_index("Id")
