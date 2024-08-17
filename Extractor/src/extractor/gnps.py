@@ -319,4 +319,6 @@ class GnpsTasks:
         return pd.concat([self._best_matches_inchi_series(), self._best_matches_scores_series()], axis=1)
     
     def all_matches(self):
-        return pd.concat([self.inchis_scores_df(), self.best_matches_df()], axis=1)
+        df = pd.concat([self.inchis_scores_df(), self.best_matches_df()], axis=1).sort_index()
+        df.index.name = "Id"
+        return df

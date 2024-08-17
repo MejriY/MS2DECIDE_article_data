@@ -28,7 +28,7 @@ def generate_summary():
 
     ts = GnpsTasks(GENERATED_DIR_SUMMARY / "Fetched/", task_ids)
     ts.load()
-    ts.all_matches().to_csv(GENERATED_DIR_SUMMARY / "All matches.csv")
+    ts.all_matches().to_csv(GENERATED_DIR_SUMMARY / "All matches.tsv", sep="\t")
 
 
 generate_summary()
