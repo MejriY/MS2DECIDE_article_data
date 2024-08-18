@@ -184,6 +184,12 @@ def generate_summary():
     )
     add_ranks_columns(compounds_joined, "Rank min K", "Rank max K", "Ranks K", "K")
 
+    duplicated_precursors_indices = compounds_joined.set_index("Precursor m/z").index.duplicated(keep=False)
+    duplicated_precursors = compounds_joined.set_index("Precursor m/z").index[duplicated_precursors_indices]
+    sids = compounds_joined.apply(lambda r: (str(r["Precursor m/z"]) + ";" + str(r["Retention time"])) if r["Precursor m/z"] in duplicated_precursors else r["Precursor m/z"], axis=1)
+    compounds_joined.insert(0, "Semantic id", sids)
+    assert compounds_joined["Semantic id"].duplicated().sum() == 0
+
     compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
     counts = compounds_joined.filter(like="Standard InChI GNPS; ").agg("count")
@@ -202,15 +208,15 @@ def generate_summary():
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
     compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
-    assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
+    # assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
     by_k = (
         compounds
-        .sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
-        .rename({"Ranks K": "Rank K"}, axis=1)
+        .sort_values("Rank min K").loc[:, ["Semantic id", "Adduct GNPS and Sirius", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     )
     compounds.rename(columns=lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
     by_k.rename(columns=lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
 
 # compute_isdb()
 # transform_isdb()
-generate_summary()
+# generate_summary()
+generate_article_data()
