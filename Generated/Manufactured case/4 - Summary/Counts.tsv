@@ -53,3 +53,4 @@ Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 500.0	88
 Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 500.0 exact	90
 Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ inf	88
 Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ inf exact	90
+Standard InChI GNPS iterated	96
