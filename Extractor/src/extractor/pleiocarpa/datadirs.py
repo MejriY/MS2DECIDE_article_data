@@ -6,7 +6,7 @@ GENERATED_DIR = REPO_DIR / "Generated/" / "Pleiocarpa case/"
 GENERATED_DIR_ISDB = GENERATED_DIR / "6 - ISDB-LOTUS/"
 GENERATED_DIR_TABLES = GENERATED_DIR / "7 - Tables/"
 
-GENERATED_DIR_ARTICLE = REPO_DIR / "../" / "Article/" / "Generated/"
+GENERATED_DIR_ARTICLE = REPO_DIR / "../" / "Article/" / "Generated/" / "Pleiocarpa/"
 
 INPUT_DIR = REPO_DIR / "Pleiocarpa case/"
 INPUT_DIR_GNPS_TASKS = INPUT_DIR / "4 - GNPS iterative/"
