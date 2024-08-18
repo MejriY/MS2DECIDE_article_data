@@ -1,6 +1,7 @@
 import pandas as pd
 from extractor.gnps import GnpsAnnotations
 from extractor.gnps import GnpsParametersFile
+from extractor.gnps import GnpsInchiScore
 import json
 import xml.etree.ElementTree as ET
 
@@ -32,3 +33,12 @@ def test_parse_parameters_manual():
         assert p0.tag == "parameter"
         assert p0.attrib["name"] == "ANALOG_SEARCH"
 
+def test_gnps_non_monotonous():
+    small_delta_a = GnpsAnnotations.from_file("tests/resources/1c3cbef069874546aca7cca96cb01a05.json")
+    small_delta_params = GnpsParametersFile("tests/resources/1c3cbef069874546aca7cca96cb01a05.xml")
+    big_delta_a = GnpsAnnotations.from_file("tests/resources/4dc38f3e2d0a4536b2ddb91d6526fca7.json")
+    big_delta_params = GnpsParametersFile("tests/resources/4dc38f3e2d0a4536b2ddb91d6526fca7.xml")
+    small_delta = GnpsInchiScore(small_delta_a, small_delta_params)
+    big_delta = GnpsInchiScore(big_delta_a, big_delta_params)
+    # to be written: id 23 was found with the stricter parameters but not with larger ones.
+    
