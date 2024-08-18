@@ -314,11 +314,21 @@ class GnpsTasks:
         for task in self.tasks.values():
             task.load()
 
+    def task_id_to_attempt_df(self):
+        to_peaks = {task.task_id: task.attempt.min_peaks for task in self.tasks.values()}
+        to_delta_mass = {task.task_id: task.attempt.max_delta_mass for task in self.tasks.values()}
+        return pd.DataFrame([to_peaks, to_delta_mass]).T.rename(columns={0: "Min peaks", 1: "Max Δ mass"}).astype({"Min peaks": int}).sort_values(by=["Min peaks", "Max Δ mass"], ascending=[False, True]).rename_axis("Task id")
+    
+    def _ordered_attempts(self):
+        if hasattr(self, "__ordered_attempts"):
+            return self.__ordered_attempts
+        all_attempts = [task.attempt for task in self.tasks.values()]
+        self.__ordered_attempts = sorted(all_attempts, key=lambda x: (-x.min_peaks, x.max_delta_mass))
+        return self.__ordered_attempts
+    
     def inchis_scores_df(self):
-        tasks = self.tasks.values()
-        # for expected ordering
-        by_attempt = {task.attempt: task for task in tasks}
-        ordered_attempts = sorted(by_attempt.keys(), key=lambda x: (-x.min_peaks, x.max_delta_mass))
+        by_attempt = {task.attempt: task for task in self.tasks.values()}
+        ordered_attempts = self._ordered_attempts()
         return pd.concat([by_attempt[attempt].inchis_scores_both_df() for attempt in ordered_attempts], axis=1)
 
     def _match_by_attempt_dict(self, id):
@@ -345,7 +355,7 @@ class GnpsTasks:
     
     def _best_matches_inchi_series(self):
         return pd.Series(
-        {i: v.inchi if v is not None else None for (i, v) in self.best_matches_discounted().items()}, name="InChI GNPS iterated"
+        {i: v.inchi if v is not None else None for (i, v) in self.best_matches_discounted().items()}, name="Standard InChI GNPS iterated"
     )
     def _best_matches_scores_series(self):
         return pd.Series(
