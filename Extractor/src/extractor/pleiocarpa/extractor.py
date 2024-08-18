@@ -214,7 +214,7 @@ def generate_article_data():
         .sort_values("Rank min K").loc[:, ["Semantic id", "Adduct GNPS and Sirius", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     )
     compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
-    by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
+    by_k.rename(columns=lambda x: x.replace(" ", "")).replace({",": ";"}, regex=True).replace({"{": ""}, regex=True).replace({"}": ""}, regex=True).replace({"'": ""}, regex=True).replace({" ": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
 
 # compute_isdb()
 # transform_isdb()
