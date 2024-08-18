@@ -3,6 +3,14 @@ from rdkit.Chem import Draw
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Avalon import pyAvalonTools
 from rdkit.Chem.Draw import rdDepictor
+from pathlib import PurePath
+import json
+import requests
+from io import StringIO
+import pandas as pd
+from github import Github
+from github import Auth
+from github import ContentFile
 
 def to_image():
     hl_from_inchi = Chem.inchi.MolFromInchi(
@@ -49,3 +57,23 @@ def add_ranks_columns(compounds_joined, rank_min_column, rank_max_column, ranks_
         ),
         axis=1,
     )
+
+def creds(auth_path = PurePath(".")):
+    file = PurePath(auth_path, "auth.json")
+    with open(file) as f:
+        auth = json.load(f)
+        username = auth["username"]
+        token = auth["token"]
+    return (username, token)
+
+def y_manufactured_df(auth_path = PurePath(".")):
+    auth = Auth.Token(creds(PurePath("."))[1])
+    with Github(auth=auth) as g:
+        repo = g.get_repo("MejriY/MS2DECIDE_article_data")
+        sha = "7ff8db2500f278770845be3fa70283242d1054ac"
+        server_path = "/Generated/Manufactured case/output gnps with new file/Manufactured annotation.tsv"
+        contents : ContentFile = repo.get_contents(server_path, ref=sha)
+        assert contents.name == "Manufactured annotation.tsv", contents
+        content_decoded = contents.decoded_content.decode("utf-8")
+        assert content_decoded.startswith("ID\t"), content_decoded
+    return pd.read_csv(StringIO(content_decoded), sep="\t").rename(columns={"ID": "Id"}).set_index("Id")
