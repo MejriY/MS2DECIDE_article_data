@@ -121,7 +121,7 @@ def generate_summary():
     tanimotos_by_id = {}
     tanimoto_values_by_id = {}
     for id in ids:
-        inchi_g = compounds_joined.loc[id, "InChI GNPS iterated"]
+        inchi_g = compounds_joined.loc[id, "Standard InChI GNPS iterated"]
         inchi_s = compounds_joined.loc[id, "InChI Sirius"]
         inchi_i = compounds_joined.loc[id, "InChI ISDB-LOTUS"]
 
@@ -183,7 +183,15 @@ def generate_summary():
 
     compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
 
-    counts = compounds_joined.filter(like="Standard InChI GNPS; ").agg("count")
+    # selected_columns = compounds_joined.columns.map(lambda s: (s.startswith("Standard InChI GNPS; ")) or (s == "Id"))
+    standards = compounds_joined.filter(like="Standard InChI GNPS")
+    # columns = standards.columns
+    # es = columns.map(lambda s: s.endswith(" exact"))
+    # ces = columns[es]
+    # nes = columns.map(lambda s: not s.endswith(" exact"))
+    # cnes = columns[nes]
+    # list(ces) + list(cnes)
+    counts = standards.agg("count")
     counts.index.name = "Column"
     counts.name = "Count"
     counts.to_csv(GENERATED_DIR_SUMMARY / "Counts.tsv", sep="\t")
