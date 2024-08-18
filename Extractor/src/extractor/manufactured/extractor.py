@@ -184,10 +184,10 @@ def generate_summary():
 
     compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
-    y_df = support.y_manufactured_df().rename(columns=lambda x: x + " Yassine")
-    compounds_joined = compounds_joined.join(y_df)
-    compounds_joined["K diff"] = (compounds_joined["K"] - compounds_joined["K Yassine"]).round(4)
-    compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined with Y.tsv", sep="\t")
+    # y_df = support.y_manufactured_df().rename(columns=lambda x: x + " Yassine")
+    # compounds_joined = compounds_joined.join(y_df)
+    # compounds_joined["K diff"] = (compounds_joined["K"] - compounds_joined["K Yassine"]).round(4)
+    # compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined with Y.tsv", sep="\t")
     
     # selected_columns = compounds_joined.columns.map(lambda s: (s.startswith("Standard InChI GNPS; ")) or (s == "Id"))
     standards = compounds_joined.filter(like="Standard InChI GNPS")
