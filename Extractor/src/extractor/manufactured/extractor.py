@@ -223,5 +223,7 @@ def generate_article_data():
         .rename({"Ranks K": "Rank K"}, axis=1)
     )
     inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
+    # Percents in smiles may cause problems with csvsimple, need to respect them there.
     compounds.drop(columns = inchis).rename(columns=lambda x: x.replace(" ", "")).replace({",": ";"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
+    compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
