@@ -88,7 +88,7 @@ def compute_isdb():
 
 
 def generate_summary():
-    GENERATED_DIR_SUMMARY.mkdir(parents=True, exist_ok=True)
+    GENERATED_DIR_TABLES.mkdir(parents=True, exist_ok=True)
 
     task_ids_file = GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json"
     with open(task_ids_file) as task_ids_data:
@@ -99,7 +99,7 @@ def generate_summary():
     ids = compounds_by_id.index
     assert len(set(ids.to_list())) == 96
 
-    ts = GnpsTasks(GENERATED_DIR_SUMMARY / "Fetched/", task_ids)
+    ts = GnpsTasks(GENERATED_DIR_TABLES / "Fetched/", task_ids)
     ts.load()
     compounds_joined = compounds_by_id.join(ts.all_matches())
 
@@ -182,12 +182,12 @@ def generate_summary():
     )
     add_ranks_columns(compounds_joined, "Rank min K", "Rank max K", "Ranks K", "K")
 
-    compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
+    compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
     y_df = support.y_manufactured_df().rename(columns=lambda x: x + " Yassine")
     compounds_joined = compounds_joined.join(y_df)
     compounds_joined["K diff"] = (compounds_joined["K"] - compounds_joined["K Yassine"]).round(4)
-    compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined with Y.tsv", sep="\t")
+    compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined with Y.tsv", sep="\t")
     
     # selected_columns = compounds_joined.columns.map(lambda s: (s.startswith("Standard InChI GNPS; ")) or (s == "Id"))
     standards = compounds_joined.filter(like="Standard InChI GNPS")
@@ -200,16 +200,16 @@ def generate_summary():
     counts = standards.agg("count")
     counts.index.name = "Column"
     counts.name = "Count"
-    counts.to_csv(GENERATED_DIR_SUMMARY / "Counts.tsv", sep="\t")
+    counts.to_csv(GENERATED_DIR_TABLES / "Counts.tsv", sep="\t")
 
     by_k = compounds_joined.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
-    by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
+    by_k.to_csv(GENERATED_DIR_TABLES / "Compounds by K.tsv", sep="\t")
 
 
 
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
-    compounds = pd.read_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t").set_index("Id")
+    compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
     assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
     by_k = (
         compounds

@@ -36,7 +36,7 @@ def transform_isdb():
     df.replace({"#": None}).to_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
 
 def generate_summary():
-    GENERATED_DIR_SUMMARY.mkdir(parents=True, exist_ok=True)
+    GENERATED_DIR_TABLES.mkdir(parents=True, exist_ok=True)
 
     mgf_file_1 = INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf"
     spectra_from_mgf_file_1 = list(matchms.importing.load_from_mgf(str(mgf_file_1)))
@@ -92,7 +92,7 @@ def generate_summary():
     with open(task_ids_file) as task_ids_data:
         task_ids = set(json.load(task_ids_data))
 
-    ts = GnpsTasks(GENERATED_DIR_SUMMARY / "Fetched/", task_ids)
+    ts = GnpsTasks(GENERATED_DIR_TABLES / "Fetched/", task_ids)
     ts.load()
     compounds_joined = compounds_joined.join(ts.all_matches())
 
@@ -180,18 +180,18 @@ def generate_summary():
     )
     add_ranks_columns(compounds_joined, "Rank min K", "Rank max K", "Ranks K", "K")
 
-    compounds_joined.to_csv(GENERATED_DIR_SUMMARY / "Compounds joined.tsv", sep="\t")
+    compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
     counts = compounds_joined.filter(like="Standard InChI GNPS; ").agg("count")
     counts.index.name = "Column"
     counts.name = "Count"
-    counts.to_csv(GENERATED_DIR_SUMMARY / "Counts.tsv", sep="\t")
+    counts.to_csv(GENERATED_DIR_TABLES / "Counts.tsv", sep="\t")
 
     by_k = compounds_joined.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
-    by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
+    by_k.to_csv(GENERATED_DIR_TABLES / "Compounds by K.tsv", sep="\t")
 
     y = pd.read_csv(INPUT_DIR / "Pleiocarpa_annotation.tsv", sep="\t").rename(columns = {"ID": "Id"}).set_index("Id").rename(columns= lambda x: x + " Yassine")
-    compounds_joined.join(y).to_csv(GENERATED_DIR_SUMMARY / "Compounds with Yassine.tsv", sep="\t")
+    compounds_joined.join(y).to_csv(GENERATED_DIR_TABLES / "Compounds with Yassine.tsv", sep="\t")
 
 # compute_isdb()
 # transform_isdb()
