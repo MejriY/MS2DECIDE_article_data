@@ -220,5 +220,6 @@ def generate_article_data():
         .sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
         .rename({"Ranks K": "Rank K"}, axis=1)
     )
-    compounds.rename(columns=lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
+    inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
+    compounds.drop(columns = inchis).rename(columns=lambda x: x.replace(" ", "_")).replace({",": ";"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
     by_k.rename(columns=lambda x: x.replace(" ", "_")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
