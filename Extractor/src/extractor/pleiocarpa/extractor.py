@@ -190,6 +190,9 @@ def generate_summary():
     by_k = compounds_joined.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     by_k.to_csv(GENERATED_DIR_SUMMARY / "Compounds by K.tsv", sep="\t")
 
+    y = pd.read_csv(INPUT_DIR / "Pleiocarpa_annotation.tsv", sep="\t").rename(columns = {"ID": "Id"}).set_index("Id").rename(columns= lambda x: x + " Yassine")
+    compounds_joined.join(y).to_csv(GENERATED_DIR_SUMMARY / "Compounds with Yassine.tsv", sep="\t")
+
 # compute_isdb()
 # transform_isdb()
 generate_summary()

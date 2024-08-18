@@ -76,14 +76,29 @@ class GnpsParametersFile:
 
 
 class GnpsFetcher:
-    def fetch(task_id: str):
+    def fetch_exact(task_id: str):
         url = f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_annotations_DB"
         with requests.get(url) as r:
             r.raise_for_status()
             return r.content
 
-    def fetch_and_save(task_id: str, path: str | os.PathLike):
-        json_data = GnpsFetcher.fetch(task_id)
+    def fetch_analog(task_id: str):
+        url = f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_analog_annotations_DB"
+        with requests.get(url) as r:
+            r.raise_for_status()
+            return r.content
+
+    def fetch_exact_and_save(task_id: str, path: str | os.PathLike):
+        json_data = GnpsFetcher.fetch_exact(task_id)
+        if GnpsAnnotations(json_data).df().empty:
+            print(f"Warning: task {task_id} has no annotations; not saving it.")
+        else:
+            with open(path, "wb") as f:
+                f.write(json_data)
+        return json_data
+
+    def fetch_analog_and_save(task_id: str, path: str | os.PathLike):
+        json_data = GnpsFetcher.fetch_analog(task_id)
         if GnpsAnnotations(json_data).df().empty:
             print(f"Warning: task {task_id} has no annotations; not saving it.")
         else:
@@ -105,15 +120,27 @@ class GnpsFetcher:
 class GnpsCacher:
     def __init__(self, cache_dir: str | os.PathLike):
         self.cache_dir = cache_dir
+        self.cache_dir_analog = cache_dir / "analog"
+        self.cache_dir_exact = cache_dir / "exact"
 
-    def cache_retrieve_annotations(self, task_id: str):
-        os.makedirs(self.cache_dir, exist_ok=True)
-        path = self.cache_dir / f"{task_id}.json"
+    def cache_retrieve_analog_annotations(self, task_id: str):
+        os.makedirs(self.cache_dir_analog, exist_ok=True)
+        path = self.cache_dir_analog / f"{task_id}.json"
         if path.exists():
             with open(path) as f:
                 json_data = f.read()
         else:
-            json_data = GnpsFetcher.fetch_and_save(task_id, path)
+            json_data = GnpsFetcher.fetch_analog_and_save(task_id, path)
+        return GnpsAnnotations(json_data)
+
+    def cache_retrieve_exact_annotations(self, task_id: str):
+        os.makedirs(self.cache_dir_exact, exist_ok=True)
+        path = self.cache_dir_exact / f"{task_id}.json"
+        if path.exists():
+            with open(path) as f:
+                json_data = f.read()
+        else:
+            json_data = GnpsFetcher.fetch_exact_and_save(task_id, path)
         return GnpsAnnotations(json_data)
 
     def cache_retrieve_parameters(self, task_id: str):
@@ -252,16 +279,25 @@ class GnpsTask:
     task_id: str
 
     def load(self):
-        all_annotations = GnpsCacher(self.cache_dir).cache_retrieve_annotations(self.task_id)
+        analog_annotations = GnpsCacher(self.cache_dir).cache_retrieve_analog_annotations(self.task_id)
+        exact_annotations = GnpsCacher(self.cache_dir).cache_retrieve_exact_annotations(self.task_id)
         parameters_file = GnpsCacher(self.cache_dir).cache_retrieve_parameters(self.task_id)
-        self.isc = GnpsInchiScore(all_annotations, GnpsParametersFile(parameters_file))
+        self.analog_isc = GnpsInchiScore(analog_annotations, GnpsParametersFile(parameters_file))
+        self.exact_isc = GnpsInchiScore(exact_annotations, GnpsParametersFile(parameters_file))
 
-    def inchis_scores_df(self):
-        return self.isc.inchis_scores_df
+    def inchis_scores_both_df(self):
+        return pd.concat([self.analog_isc.inchis_scores_df, self.exact_isc.inchis_scores_df.rename(lambda x: x + " exact", axis=1)], axis=1)
+
+    def inchis_scores_analog_df(self):
+        return self.analog_isc.inchis_scores_df
+
+    def inchis_scores_exact_df(self):
+        return self.exact_isc.inchis_scores_df
 
     @property
     def attempt(self):
-        return self.isc.attempt
+        assert self.analog_isc.attempt == self.exact_isc.attempt
+        return self.analog_isc.attempt
 
     def __eq__(self, other):
         return self.task_id == other.task_id
@@ -281,20 +317,20 @@ class GnpsTasks:
     def inchis_scores_df(self):
         tasks = self.tasks.values()
         # for expected ordering
-        by_attempt = {task.isc.attempt: task for task in tasks}
+        by_attempt = {task.attempt: task for task in tasks}
         ordered_attempts = sorted(by_attempt.keys(), key=lambda x: (-x.min_peaks, x.max_delta_mass))
-        return pd.concat([by_attempt[attempt].inchis_scores_df() for attempt in ordered_attempts], axis=1)
+        return pd.concat([by_attempt[attempt].inchis_scores_both_df() for attempt in ordered_attempts], axis=1)
 
     def _match_by_attempt_dict(self, id):
         match_by_attempt = {}
         for task in self.tasks.values():
-            short_match_results = task.isc.short_matches()
+            short_match_results = task.analog_isc.short_matches()
             if(id not in short_match_results.keys()):
                 match = None
             else:
                 match = short_match_results[id]
             if match is not None:
-                match_by_attempt[task.isc.attempt] = match
+                match_by_attempt[task.analog_isc.attempt] = match
         return match_by_attempt
 
     def _best_match_discounted(self, id):
