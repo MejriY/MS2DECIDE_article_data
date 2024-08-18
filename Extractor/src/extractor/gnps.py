@@ -10,19 +10,30 @@ from rdkit.Chem.rdchem import Mol
 import rdkit.Chem as Chem
 from ms2decide.ClosestGNPS import _get_iterative_parameters
 
-DISCOUNTS = _get_iterative_parameters()
+def discounts():
+    discs = _get_iterative_parameters()
+    for d in discs.keys():
+        discs[d][float("inf")] = discs[d][0]
+    return discs
+
+DISCOUNTS = discounts()
 
 
 class GnpsAnnotations:
-    def __init__(self, json_raw_data: str):
+    def __init__(self, json_raw_data: bytes):
         self.json_raw_data = json_raw_data
 
     def from_file(json_file: str | os.PathLike):
-        with open(json_file) as json_data:
+        # need to be careful as some data is not utf-8 (see tests)
+        with open(json_file, "rb") as json_data:
             return GnpsAnnotations(json_data.read())
 
     def df(self):
-        js = json.loads(self.json_raw_data)
+        if type(self.json_raw_data) == str:
+            workaround = self.json_raw_data.encode("utf-8", errors="replace")
+        else:
+            workaround = self.json_raw_data
+        js = json.loads(workaround.decode("utf-8", errors="replace"))
         assert len(js) == 1
         ((k, v),) = js.items()
         if len(v) == 0:
@@ -127,7 +138,7 @@ class GnpsCacher:
         os.makedirs(self.cache_dir_analog, exist_ok=True)
         path = self.cache_dir_analog / f"{task_id}.json"
         if path.exists():
-            with open(path) as f:
+            with open(path, "rb") as f:
                 json_data = f.read()
         else:
             json_data = GnpsFetcher.fetch_analog_and_save(task_id, path)
@@ -180,6 +191,12 @@ class GnpsInchiScore:
         return self.summary.loc[:, "Smiles"]
 
     @property
+    def adducts(self):
+        if self.summary.empty:
+            return pd.Series()
+        return self.summary.loc[:, "Adduct"]
+
+    @property
     def inchis_smiles_df(self):
         new_cols = {"INCHI": self.inchis, "Smiles": self.smiles}
         return pd.DataFrame(new_cols)
@@ -204,6 +221,7 @@ class GnpsInchiScore:
             f"Smiles GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.smiles,
             f"Standard InChI GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.standard_inchis(),
             f"Score GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.scores,
+            f"Adduct GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.adducts,
         }
         return pd.DataFrame(new_cols)
 

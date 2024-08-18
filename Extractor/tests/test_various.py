@@ -12,6 +12,8 @@ from github import Auth
 import urllib
 import base64
 from github import ContentFile
+import pytest
+from json import JSONDecodeError
 
 def test_read_df():
     df = GnpsAnnotations.from_file("tests/resources/26a5cbca3e844cc0b126f992c69df832.json").df()
@@ -49,6 +51,26 @@ def test_gnps_non_monotonous():
     small_delta = GnpsInchiScore(small_delta_a, small_delta_params)
     big_delta = GnpsInchiScore(big_delta_a, big_delta_params)
     # to be written: id 23 was found with the stricter parameters but not with larger ones.
+
+def test_load_invalid_utf8():
+    with open("tests/resources/Invalid UTF-8 61f141ad8c3449fdb78a5086630b40f5.json", "rb") as f:
+        bytes = f.read()
+    with pytest.raises(UnicodeDecodeError):
+        json.loads(bytes)
+    with pytest.raises(UnicodeDecodeError):
+        json.loads(bytes.decode("utf-8"))
+    with pytest.raises(JSONDecodeError):
+        json.loads(bytes.decode("utf-8", errors="backslashreplace"))
+    json_data = json.loads(bytes.decode("utf-8", errors="replace"))
+    assert len(json_data) == 1
+    json_objects = json_data["blockData"]
+    assert len(json_objects) >= 100, len(json_objects)
+    for json_object in json_objects:
+        if(json_object["#Scan#"]=="1158"):
+            pbl_object = json_object
+            break
+    assert pbl_object["#Scan#"] == "1158", pbl_object
+    assert pbl_object["Compound_Name"] == "(1S,5R,9S,13R)-14-formyl-5,9-dimethyltetracyclo[11.2.1.0�,�???.0???,???]hexadec-14-ene-5-carboxylic acid", pbl_object["Compound_Name"]
 
 def test_direct_dl_fails():
     credsd = support.creds(PurePath("."))

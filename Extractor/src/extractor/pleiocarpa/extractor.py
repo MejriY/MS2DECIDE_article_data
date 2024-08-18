@@ -19,6 +19,7 @@ from ms2decide.K import K
 from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
 from extractor.pleiocarpa.datadirs import *
+from collections import Counter
 
 def compute_isdb():
     GENERATED_DIR_ISDB.mkdir(parents=True, exist_ok=True)
@@ -98,8 +99,11 @@ def generate_summary():
 
     sirius_df = pd.read_csv(INPUT_DIR_SIRIUS / "structure_identifications.tsv", sep="\t").set_index("mappingFeatureId")
     sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
-    sirius_df = sirius_df.rename(columns={"InChI": "InChI Sirius"}).loc[:, ["InChI Sirius", "Score Sirius"]]
+    sirius_df["Adduct Sirius"] = sirius_df["adduct"].map(lambda s: s.replace(" ", ""))
+    sirius_df = sirius_df.rename(columns={"InChI": "InChI Sirius"}).loc[:, ["InChI Sirius", "Score Sirius", "Adduct Sirius"]]
     compounds_joined = compounds_joined.join(sirius_df)
+
+    compounds_joined["Adduct GNPS and Sirius"] = compounds_joined.apply(lambda r: str(dict(Counter(r[r.index.map(lambda c: c.startswith("Adduct "))]))), axis=1)
 
     isdb_df = (
         pd.read_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
@@ -117,7 +121,7 @@ def generate_summary():
     tanimotos_by_id = {}
     tanimoto_values_by_id = {}
     for id in ids:
-        inchi_g = compounds_joined.loc[id, "InChI GNPS iterated"]
+        inchi_g = compounds_joined.loc[id, "Standard InChI GNPS iterated"]
         inchi_s = compounds_joined.loc[id, "InChI Sirius"]
         inchi_i = compounds_joined.loc[id, "InChI ISDB-LOTUS"]
 
