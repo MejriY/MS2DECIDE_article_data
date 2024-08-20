@@ -114,7 +114,7 @@ def generate_summary():
     compounds_by_id = compounds.reset_index().set_index("Id")
     ids = compounds_by_id.index
     assert len(set(ids.to_list())) == 96
-    
+
     ts = GnpsTasks(GENERATED_DIR_TABLES / "Fetched/", task_ids)
     ts.load()
     compounds_joined = compounds_by_id.join(ts.all_matches())
@@ -240,5 +240,5 @@ def generate_article_data():
     inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
     # Percents in smiles may cause problems with csvsimple
     compounds.drop(columns = inchis).rename(columns=lambda x: x.replace(" ", "")).replace({",": ";", "N\\-demethyl": r"N\\Hyphdash{}demethyl"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
-    compounds.rename(columns=lambda x: x.replace(" ", "")).rename(columns=lambda x: x.replace("-", "")).replace({"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
+    compounds.rename(columns=lambda x: x.replace(" ", "").replace("-", "").replace("/", "")).replace({"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
