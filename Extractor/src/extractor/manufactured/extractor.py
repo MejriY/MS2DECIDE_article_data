@@ -63,7 +63,7 @@ def generate_gnps_input():
         spectrum = d[name]
         all_spectra.append(spectrum)
 
-    # This export PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
+    # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
     matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All Matchms.mgf"))
     matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All GNPS.mgf"), export_style="gnps")
 
@@ -96,10 +96,25 @@ def generate_summary():
         task_ids = set(json.load(task_ids_data))
 
     compounds_file = INPUT_DIR / "Compounds.tsv"
-    compounds_by_id = pd.read_csv(compounds_file, sep="\t").set_index("Id")
+    compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
+    names = set(compounds.index.to_list())
+
+    all_annotations = INPUT_DIR / "Mgf files/"
+    mgfs = MgfFiles(all_annotations)
+    assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
+
+    inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
+    compounds["Relative molecular weight"] = inchis.apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)))
+    compounds["Precursor m/z"] = mgfs.precursors
+    compounds["Retention time"] = mgfs.retentions
+    compounds["Precursor m/z − relative molecular weight"] = (
+        compounds["Precursor m/z"] - compounds["Relative molecular weight"]
+    )
+
+    compounds_by_id = compounds.reset_index().set_index("Id")
     ids = compounds_by_id.index
     assert len(set(ids.to_list())) == 96
-
+    
     ts = GnpsTasks(GENERATED_DIR_TABLES / "Fetched/", task_ids)
     ts.load()
     compounds_joined = compounds_by_id.join(ts.all_matches())
@@ -223,7 +238,7 @@ def generate_article_data():
         .rename({"Ranks K": "Rank K"}, axis=1)
     )
     inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
-    # Percents in smiles may cause problems with csvsimple, need to respect them there.
-    compounds.drop(columns = inchis).rename(columns=lambda x: x.replace(" ", "")).replace({",": ";"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
-    compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
+    # Percents in smiles may cause problems with csvsimple
+    compounds.drop(columns = inchis).rename(columns=lambda x: x.replace(" ", "")).replace({",": ";", "N\\-demethyl": r"N\\Hyphdash{}demethyl"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
+    compounds.rename(columns=lambda x: x.replace(" ", "")).rename(columns=lambda x: x.replace("-", "")).replace({"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
