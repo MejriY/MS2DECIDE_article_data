@@ -11,6 +11,11 @@ import pandas as pd
 from github import Github
 from github import Auth
 from github import ContentFile
+import extractor.manufactured.datadirs as mdirs
+
+def unreported_ones():
+    compounds_manufactured = pd.read_csv(mdirs.GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
+    return compounds_manufactured[compounds_manufactured["Chemical name"].map(lambda s: s.startswith("Unreported "))]
 
 def to_image():
     hl_from_inchi = Chem.inchi.MolFromInchi(

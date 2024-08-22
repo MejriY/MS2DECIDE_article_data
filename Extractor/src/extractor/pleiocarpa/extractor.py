@@ -20,6 +20,7 @@ from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
 from extractor.pleiocarpa.datadirs import *
 from collections import Counter
+import extractor.support as support
 
 def compute_isdb():
     GENERATED_DIR_ISDB.mkdir(parents=True, exist_ok=True)
@@ -192,7 +193,7 @@ def generate_summary():
 
     compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
-    counts = compounds_joined.filter(like="Standard InChI GNPS; ").agg("count")
+    counts = compounds_joined.filter(like="Standard InChI GNPS").agg("count")
     counts.index.name = "Column"
     counts.name = "Count"
     counts.to_csv(GENERATED_DIR_TABLES / "Counts.tsv", sep="\t")
@@ -207,16 +208,21 @@ def generate_summary():
 
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
+
+    # os.chdir("Data/Extractor/")
+    # unreported_df = support.unreported_ones()
+    # rounded_unreported_masses = unreported_df["Precursor m/z"].map(lambda p: round(p))
+
     compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
-    # assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
+    # compounds["Unreported"] = compounds["Precursor m/z"].map(lambda p: round(p) in rounded_unreported_masses)
     by_k = (
         compounds
         .sort_values("Rank min K").loc[:, ["Semantic id", "Adduct GNPS and Sirius", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     )
     compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
-    by_k.rename(columns=lambda x: x.replace(" ", "")).replace({",": ";"}, regex=True).replace({"{": ""}, regex=True).replace({"}": ""}, regex=True).replace({"'": ""}, regex=True).replace({" ": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
-
+    by_k.rename(columns=lambda x: x.replace(" ", "")).replace({",": ";"}, regex=True).replace({"{": ""}, regex=True).replace({"}": ""}, regex=True).replace({"'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
+    
 # compute_isdb()
 # transform_isdb()
-# generate_summary()
+generate_summary()
 generate_article_data()
