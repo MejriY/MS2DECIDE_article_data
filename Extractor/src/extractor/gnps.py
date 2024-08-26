@@ -103,7 +103,7 @@ class GnpsAnnotations:
         return self.inchis_smiles_series().apply(lambda x: x.to_standard_inchi).rename("Standard InChI")
 
     def summary_df(self):
-        return self._summary().join(self.standard_inchis_series()).rename(columns={"ExactMass": "Exact mass", "Precursor_MZ": "Precursor MZ", "MQScore": "Score", "INCHI": "InChI", "INCHI_AUX": "InChI aux"}).astype({"Exact mass": float, "Precursor MZ": float, "Score": float})
+        return self._summary().join(self.standard_inchis_series()).rename(columns={"ExactMass": "Exact mass", "Precursor_MZ": "Precursor m/z", "MQScore": "Score", "INCHI": "InChI", "INCHI_AUX": "InChI aux"}).astype({"Exact mass": float, "Precursor m/z": float, "Score": float})
    
     def matches_series(self):
         return self.summary_df().join(self.inchis_smiles_series()).apply(lambda x: GnpsMatch(x["InchiSmiles"].to_mol, x["Standard InChI"], x["Score"]), axis=1)
