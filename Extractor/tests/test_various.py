@@ -1,7 +1,4 @@
 import pandas as pd
-from extractor.gnps import GnpsAnnotations
-from extractor.gnps import GnpsParametersFile
-from extractor.gnps import GnpsInchiScore
 from extractor import support
 from pathlib import PurePath
 import json
@@ -14,11 +11,11 @@ import base64
 from github import ContentFile
 import pytest
 from json import JSONDecodeError
+from pathlib import Path
+from rdkit import Chem
+from rdkit import RDLogger
+import re
 
-def test_read_df():
-    df = GnpsAnnotations.from_file("tests/resources/26a5cbca3e844cc0b126f992c69df832.json").df()
-    assert df.shape == (71, 48)
-    
 def test_read_df_manual():
     json_file = "tests/resources/26a5cbca3e844cc0b126f992c69df832.json"
     with open(json_file) as json_data:
@@ -27,11 +24,6 @@ def test_read_df_manual():
         (k, v), = js.items()
         df = pd.DataFrame(v)
     assert df.shape == (71, 48)
-
-def test_parse_parameters():
-    xml_file = "tests/resources/26a5cbca3e844cc0b126f992c69df832.xml"
-    ps = GnpsParametersFile(xml_file).params()
-    assert len(ps) == 37
 
 def test_parse_parameters_manual():
     xml_file = "tests/resources/26a5cbca3e844cc0b126f992c69df832.xml"
@@ -43,17 +35,30 @@ def test_parse_parameters_manual():
         assert p0.tag == "parameter"
         assert p0.attrib["name"] == "ANALOG_SEARCH"
 
-def test_gnps_non_monotonous():
-    small_delta_a = GnpsAnnotations.from_file("tests/resources/1c3cbef069874546aca7cca96cb01a05.json")
-    small_delta_params = GnpsParametersFile("tests/resources/1c3cbef069874546aca7cca96cb01a05.xml")
-    big_delta_a = GnpsAnnotations.from_file("tests/resources/4dc38f3e2d0a4536b2ddb91d6526fca7.json")
-    big_delta_params = GnpsParametersFile("tests/resources/4dc38f3e2d0a4536b2ddb91d6526fca7.xml")
-    small_delta = GnpsInchiScore(small_delta_a, small_delta_params)
-    big_delta = GnpsInchiScore(big_delta_a, big_delta_params)
-    # to be written: id 23 was found with the stricter parameters but not with larger ones.
+def test_rdkit_spits_out(capfd):
+    RDLogger.DisableLog('rdApp.info')
+    assert Chem.inchi.MolFromInchi("pure garbage") is None
+    captured = capfd.readouterr()
+    assert captured.out == ""
+    assert re.compile(r"\[..:..:..\] ERROR: \n\n").match(captured.err)
+
+def test_rdkit_silent(capfd):
+    # https://github.com/rdkit/rdkit/issues/2320
+    RDLogger.DisableLog("rdApp.*")
+    assert Chem.inchi.MolFromInchi("pure garbage") is None
+    captured = capfd.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
 
 def test_load_invalid_utf8():
-    with open("tests/resources/Invalid UTF-8 61f141ad8c3449fdb78a5086630b40f5.json", "rb") as f:
+    input_path = Path("tests/resources/Invalid UTF-8 61f141ad8c3449fdb78a5086630b40f5.json")
+    with open(input_path, encoding="utf-8") as f:
+        with pytest.raises(UnicodeDecodeError):
+            json_data = json.load(f)
+    with open(input_path, encoding="utf-8") as f:
+        with pytest.raises(UnicodeDecodeError):
+            json_data = json.loads(f.read())
+    with open(input_path, "rb") as f:
         bytes = f.read()
     with pytest.raises(UnicodeDecodeError):
         json.loads(bytes)

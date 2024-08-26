@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 requires-python = ">=3.7"
 name = "extractor"
 version = "0.0.1"
-dependencies = ["rdkit", "matchms", "numpy", "pandas", "requests", "PyGithub", "jupyter", "pytest"]
+dependencies = ["rdkit", "matchms", "numpy", "pandas", "requests", "PyGithub", "jupyter", "pytest", "responses"]
 
 [project.scripts]
 manuf-clean = "extractor.manufactured.extractor:clean"

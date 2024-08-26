@@ -9,6 +9,12 @@ from dataclasses import dataclass
 from rdkit.Chem.rdchem import Mol
 import rdkit.Chem as Chem
 from ms2decide.ClosestGNPS import _get_iterative_parameters
+from functools import singledispatchmethod
+from io import BytesIO
+from functools import cached_property
+from functools import cache
+from functools import total_ordering
+from collections import OrderedDict
 
 def discounts():
     discs = _get_iterative_parameters()
@@ -16,230 +22,288 @@ def discounts():
         discs[d][float("inf")] = discs[d][0]
     return discs
 
+
 DISCOUNTS = discounts()
 
 
 class GnpsAnnotations:
-    def __init__(self, json_raw_data: bytes):
-        self.json_raw_data = json_raw_data
+    _json_str: str
+    _INDEX = "#Scan#"
+    _COLS = [
+        "Adduct",
+        "ExactMass",
+        "Precursor_MZ",
+        "SpecMZ",
+        "Charge",
+        "SpecCharge",
+        "MQScore",
+        "INCHI",
+        "INCHI_AUX",
+        "InChIKey",
+        "Smiles",
+    ]
 
-    def from_file(json_file: str | os.PathLike):
-        # need to be careful as some data is not utf-8 (see tests)
-        with open(json_file, "rb") as json_data:
-            return GnpsAnnotations(json_data.read())
-
-    def df(self):
-        if type(self.json_raw_data) == str:
-            workaround = self.json_raw_data.encode("utf-8", errors="replace")
+    def __init__(self, json_data: bytes | str | None = None):
+        if isinstance(json_data, bytes):
+            self._json_str = json_data.decode(errors="replace")
         else:
-            workaround = self.json_raw_data
-        js = json.loads(workaround.decode("utf-8", errors="replace"))
-        assert len(js) == 1
-        ((k, v),) = js.items()
+            self._json_str = json_data
+        # assert self.inchis.index.isin(self.scores.index).all()
+        # assert self.smiles.index.isin(self.scores.index).all()
+
+    @classmethod
+    def from_file(cls, json_file: bytes | str | os.PathLike):
+        with open(json_file, "rb") as json_stream:
+            return GnpsAnnotations(json_stream.read())
+
+    @cache
+    def raw_df(self):
+        if self._json_str is None:
+            v = []
+        else:
+            js = json.loads(self._json_str)
+            assert len(js) == 1
+            ((k, v),) = js.items()
         if len(v) == 0:
-            return pd.DataFrame()
-        df = pd.DataFrame(v)
-        return df
-
-    def summary(self):
-        summary = (
-            self.df()
-            .loc[
-                :,
-                [
-                    "#Scan#",
-                    "Adduct",
-                    "ExactMass",
-                    "Precursor_MZ",
-                    "SpecMZ",
-                    "Charge",
-                    "SpecCharge",
-                    "MQScore",
-                    "INCHI",
-                    "INCHI_AUX",
-                    "InChIKey",
-                    "Smiles",
-                ],
-            ]
-            .rename(columns={"#Scan#": "Id"})
-        )
-        summary["Id"] = summary["Id"].astype(int)
-        return summary.set_index("Id").sort_index()
-
-
-class GnpsParametersFile:
-    def __init__(self, xml_file: str | os.PathLike):
-        self.xml_file = xml_file
-
-    def params(self):
-        with open(self.xml_file) as f:
-            xml = f.read()
-            tree = ET.parse(self.xml_file)
-            root = tree.getroot()
-            subtags = set([p.tag for p in root])
-            assert subtags == {"parameter"}, subtags
-            names_mult = Counter([p.attrib["name"] for p in root])
-            dupls = set([names for names, count in names_mult.items() if count > 1])
-            assert dupls == {} or dupls == {"upload_file_mapping"}, dupls
-
-            d = {p.attrib["name"]: p.text for p in root if p.attrib["name"] not in dupls}
-            return d
-
-
-class GnpsFetcher:
-    def fetch_exact(task_id: str):
-        url = f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_annotations_DB"
-        with requests.get(url) as r:
-            r.raise_for_status()
-            return r.content
-
-    def fetch_analog(task_id: str):
-        url = f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_analog_annotations_DB"
-        with requests.get(url) as r:
-            r.raise_for_status()
-            return r.content
-
-    def fetch_exact_and_save(task_id: str, path: str | os.PathLike):
-        json_data = GnpsFetcher.fetch_exact(task_id)
-        if GnpsAnnotations(json_data).df().empty:
-            print(f"Warning: task {task_id} has no annotations; not saving it.")
+            df = pd.DataFrame(columns=[self._INDEX] + self._COLS).set_index(self._INDEX)
         else:
-            with open(path, "wb") as f:
-                f.write(json_data)
-        return json_data
+            df = pd.DataFrame(v).set_index(self._INDEX)
+        int_index = df.index.astype(int)
+        return df.set_index(int_index).sort_index()
 
-    def fetch_analog_and_save(task_id: str, path: str | os.PathLike):
-        json_data = GnpsFetcher.fetch_analog(task_id)
-        if GnpsAnnotations(json_data).df().empty:
-            print(f"Warning: task {task_id} has no annotations; not saving it.")
+    def _summary(self):
+        summary = self.raw_df().loc[
+            :,
+            self._COLS,
+        ]
+        summary.index.rename("Id", inplace=True)
+        return summary
+
+    def ids(self):
+        return self._summary().index
+
+    def inchis(self):
+        return self._summary()["INCHI"].rename("InChI")
+
+    def smiles(self):
+        return self._summary().loc[:, "Smiles"]
+
+    def adducts(self):
+        return self._summary().loc[:, "Adduct"]
+
+    def scores(self):
+        return self._summary().loc[:, "MQScore"].astype(float).rename("Score")
+ 
+    @cache
+    def inchis_smiles_series(self):
+        return self._summary().apply(lambda x: GnpsInchiSmiles(x["INCHI"], x["Smiles"]), axis=1).rename("InchiSmiles")
+    
+    @cache
+    def standard_inchis_series(self):
+        return self.inchis_smiles_series().apply(lambda x: x.to_standard_inchi).rename("Standard InChI")
+
+    def summary_df(self):
+        return self._summary().join(self.standard_inchis_series()).rename(columns={"ExactMass": "Exact mass", "Precursor_MZ": "Precursor MZ", "MQScore": "Score", "INCHI": "InChI", "INCHI_AUX": "InChI aux"}).astype({"Exact mass": float, "Precursor MZ": float, "Score": float})
+   
+    def matches_series(self):
+        return self.summary_df().join(self.inchis_smiles_series()).apply(lambda x: GnpsMatch(x["InchiSmiles"].to_mol, x["Standard InChI"], x["Score"]), axis=1)
+
+class GnpsParameters:
+    _xml_data: str | bytes
+
+    def __init__(self, xml_data: bytes | str):
+        self._xml_data = xml_data
+
+    @classmethod
+    def from_file(cls, xml_file: bytes | str | os.PathLike):
+        with open(xml_file) as xml_stream:
+            return GnpsParameters(xml_stream.read())
+
+    def all(self) -> dict[str, str]:
+        if hasattr(self, "_all"):
+            return self._all
+
+        if isinstance(self._xml_data, bytes):
+            root = ET.parse(BytesIO(self._xml_data)).getroot()
         else:
-            with open(path, "wb") as f:
-                f.write(json_data)
-        return json_data
+            root = ET.fromstring(self._xml_data)
+        subtags = set([p.tag for p in root])
+        assert subtags == {"parameter"}, subtags
+        names_mult = Counter([p.attrib["name"] for p in root])
+        dupls = set([names for names, count in names_mult.items() if count > 1])
+        assert dupls == {} or dupls == {"upload_file_mapping"}, dupls
 
-    def fetch_parameters(task_id: str):
-        url = f"https://gnps.ucsd.edu/ProteoSAFe/ManageParameters?task={task_id}"
+        self._all = {p.attrib["name"]: p.text for p in root if p.attrib["name"] not in dupls}
+        return self._all
+
+    @property
+    def min_peaks(self):
+        return int(self.all()["MIN_MATCHED_PEAKS_SEARCH"])
+
+    @property
+    def max_delta_mass(self):
+        raw = float(self.all()["MAX_SHIFT_MASS"])
+        return raw if raw != 0 else float("inf")
+
+    def to_query(self):
+        return GnpsQuery(self.min_peaks, self.max_delta_mass)
+
+class GnpsTaskFetcher:
+    _task_id: str
+
+    @classmethod
+    def url_status(cls, task_id: str):
+        return f"https://gnps.ucsd.edu/ProteoSAFe/status_json.jsp?task={task_id}"
+
+    @classmethod
+    def url_exact(cls, task_id: str):
+        return f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_annotations_DB"
+
+    @classmethod
+    def url_analog(cls, task_id: str):
+        return f"https://gnps.ucsd.edu/ProteoSAFe/result_json.jsp?task={task_id}&view=view_all_analog_annotations_DB"
+
+    @classmethod
+    def url_parameters(cls, task_id: str):
+        return f"https://gnps.ucsd.edu/ProteoSAFe/ManageParameters?task={task_id}"
+
+    def __init__(self, task_id: str):
+        self._task_id = task_id
+
+    def done(self):
+        if hasattr(self, "_done"):
+            return True
+
+        url = self.url_status(self._task_id)
         with requests.get(url) as r:
             r.raise_for_status()
-            return r.content
+            data = r.json()
+            done: bool = data["status"] == "DONE"
+            if done:
+                self._done = True
+            return done
 
-    def fetch_parameters_and_save(task_id: str, path: str | os.PathLike):
-        with open(path, "wb") as f:
-            f.write(GnpsFetcher.fetch_parameters(task_id))
+    def fetch_exact(self):
+        assert self.done()
+        url = self.url_exact(self._task_id)
+        with requests.get(url) as r:
+            r.raise_for_status()
+            answer = r.content
+            assert isinstance(answer, bytes)
+            return answer
+
+    def fetch_analog(self):
+        assert self.done()
+        url = self.url_analog(self._task_id)
+        with requests.get(url) as r:
+            r.raise_for_status()
+            answer = r.content
+            assert isinstance(answer, bytes)
+            return answer
+
+    def fetch_parameters(self):
+        url = self.url_parameters(self._task_id)
+        with requests.get(url) as r:
+            r.raise_for_status()
+            answer = r.content
+            assert isinstance(answer, bytes)
+            return answer
 
 
-class GnpsCacher:
-    def __init__(self, cache_dir: str | os.PathLike):
+class GnpsCachingTaskFetcher:
+    def __init__(self, cache_dir: os.PathLike):
         self.cache_dir = cache_dir
         self.cache_dir_analog = cache_dir / "analog"
         self.cache_dir_exact = cache_dir / "exact"
 
-    def cache_retrieve_analog_annotations(self, task_id: str):
+    def exact_annotations(self, task_id: str):
+        os.makedirs(self.cache_dir_exact, exist_ok=True)
+
+        path = self.cache_dir_exact / f"{task_id}.json"
+        if path.exists():
+            with open(path, "rb") as f:
+                json_data = f.read()
+        else:
+            fetcher = GnpsTaskFetcher(task_id)
+            if not fetcher.done():
+                return GnpsAnnotations()
+
+            json_data = fetcher.fetch_exact()
+            with open(path, "wb") as f:
+                f.write(json_data)
+        return GnpsAnnotations(json_data)
+
+    def analog_annotations(self, task_id: str):
         os.makedirs(self.cache_dir_analog, exist_ok=True)
+
         path = self.cache_dir_analog / f"{task_id}.json"
         if path.exists():
             with open(path, "rb") as f:
                 json_data = f.read()
         else:
-            json_data = GnpsFetcher.fetch_analog_and_save(task_id, path)
+            fetcher = GnpsTaskFetcher(task_id)
+            if not fetcher.done():
+                return GnpsAnnotations()
+
+            json_data = fetcher.fetch_analog()
+            with open(path, "wb") as f:
+                f.write(json_data)
         return GnpsAnnotations(json_data)
 
-    def cache_retrieve_exact_annotations(self, task_id: str):
-        os.makedirs(self.cache_dir_exact, exist_ok=True)
-        path = self.cache_dir_exact / f"{task_id}.json"
-        if path.exists():
-            with open(path) as f:
-                json_data = f.read()
-        else:
-            json_data = GnpsFetcher.fetch_exact_and_save(task_id, path)
-        return GnpsAnnotations(json_data)
-
-    def cache_retrieve_parameters(self, task_id: str):
+    def parameters(self, task_id: str):
         os.makedirs(self.cache_dir, exist_ok=True)
+
         path = self.cache_dir / f"{task_id}.xml"
-        if not path.exists():
-            GnpsFetcher.fetch_parameters_and_save(task_id, path)
-        return path
-
-
-class GnpsInchiScore:
-    def __init__(self, all_annotations: GnpsAnnotations, parameters: GnpsParametersFile):
-        if all_annotations.df().empty:
-            self.summary = pd.DataFrame()
+        if path.exists():
+            with open(path, "rb") as f:
+                data = f.read()
         else:
-            self.summary = all_annotations.summary()
-        ps = parameters.params()
-        self.min_peaks = int(ps["MIN_MATCHED_PEAKS_SEARCH"])
-        self.max_delta_mass = float(ps["MAX_SHIFT_MASS"])
-        assert self.inchis.index.isin(self.scores.index).all()
-        assert self.smiles.index.isin(self.scores.index).all()
+            fetcher = GnpsTaskFetcher(task_id)
+            data = fetcher.fetch_parameters()
+            with open(path, "wb") as f:
+                f.write(data)
+        return GnpsParameters(data)
 
-    @property
-    def ids(self):
-        return self.summary.index
+    def queried(self, task_id: str):
+        return GnpsQueried(self.parameters(task_id).to_query, self.exact_annotations(task_id), self.analog_annotations(task_id))
 
-    @property
-    def inchis(self):
-        if self.summary.empty:
-            return pd.Series()
-        return self.summary.loc[:, "INCHI"]
+@dataclass(frozen=True)
+class GnpsInchiSmiles:
+    raw_inchi: str
+    smiles: str
 
-    @property
-    def smiles(self):
-        if self.summary.empty:
-            return pd.Series()
-        return self.summary.loc[:, "Smiles"]
+    @cached_property
+    def sanitized_inchi(self):
+        removed = self.raw_inchi.replace('"', "").strip()
+        if not removed.startswith("InChI="):
+            return "InChI=" + removed
+        return removed
 
-    @property
-    def adducts(self):
-        if self.summary.empty:
-            return pd.Series()
-        return self.summary.loc[:, "Adduct"]
+    @cached_property
+    def to_mol(self) -> Mol | None:
+        i = Chem.inchi.MolFromInchi(self.sanitized_inchi)
+        if i is None:
+            mol = Chem.MolFromSmiles(self.smiles)
+        else:
+            mol = i
+        return mol
 
-    @property
-    def inchis_smiles_df(self):
-        new_cols = {"INCHI": self.inchis, "Smiles": self.smiles}
-        return pd.DataFrame(new_cols)
-
-    def standard_inchis(self):
-        if not hasattr(self, "_standard_inchis"):
-            self._standard_inchis = self.inchis_smiles_df.apply(
-                lambda x: GnpsInchiSmiles(x["INCHI"], x["Smiles"]).to_standard_inchi(), axis=1
-            )
-        return self._standard_inchis
-
-    @property
-    def scores(self):
-        if self.summary.empty:
-            return pd.Series().astype(float)
-        return self.summary.loc[:, "MQScore"].astype(float)
-
-    @property
-    def inchis_scores_df(self):
-        new_cols = {
-            f"InChI GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.inchis,
-            f"Smiles GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.smiles,
-            f"Standard InChI GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.standard_inchis(),
-            f"Score GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.scores,
-            f"Adduct GNPS; peaks ≥ {self.attempt.min_peaks}; Δ mass ≤ {self.attempt.max_delta_mass}": self.adducts,
-        }
-        return pd.DataFrame(new_cols)
-
-    @property
-    def attempt(self):
-        return GnpsIterativeAttempt(self.min_peaks, self.max_delta_mass if self.max_delta_mass != 0 else float("inf"))
-
-    def short_matches(self):
-        if not hasattr(self, "_short_matches_dict"):
-            self._short_matches_dict = {id: GnpsReadableMatch(self.standard_inchis()[id], self.scores[id]) for id in self.ids}
-        return self._short_matches_dict
+    @cached_property
+    def to_standard_inchi(self) -> str | None:
+        mol = self.to_mol
+        if mol is None:
+            return None
+        return Chem.inchi.MolToInchi(mol)
 
 
-# Still need to find out how to order descending by min peaks.
-@dataclass(frozen=True, order=True)
-class GnpsIterativeAttempt:
+@dataclass(frozen=True)
+@total_ordering
+class GnpsQuery:
     min_peaks: int
     max_delta_mass: float
+
+    def __lt__(self, other):
+        return (-self.min_peaks, self.max_delta_mass) < (-other.min_peaks, other.max_delta_mass)
 
     @property
     def discount(self):
@@ -247,142 +311,74 @@ class GnpsIterativeAttempt:
 
 
 @dataclass(frozen=True)
-class GnpsInchiSmiles:
-    inchi: str
-    smiles: str
+class GnpsQueried:
+    query: GnpsQuery
+    exact_annotations: GnpsAnnotations
+    analog_annotations: GnpsAnnotations
 
-    def sanitized_inchi(self):
-        removed = self.inchi.replace('"', "").strip()
-        if not removed.startswith("InChI="):
-            return "InChI=" + removed
-        return removed
+    def __post_init__(self):
+        assert self.exact_annotations.ids().equals(self.analog_annotations.ids())
 
-    def to_mol(self):
-        i = Chem.inchi.MolFromInchi(self.sanitized_inchi())
-        if i is None:
-            mol = Chem.MolFromSmiles(self.smiles)
-        else:
-            mol = i
-        return mol
+    @property
+    def min_peaks(self):
+        return self.query.min_peaks
 
-    def to_standard_inchi(self):
-        mol = self.to_mol()
-        if mol is None:
-            return None
-        return Chem.inchi.MolToInchi(mol)
+    @property
+    def max_delta_mass(self):
+        return self.query.max_delta_mass
+
+    @property
+    def ids(self):
+        return self.exact_annotations.ids()
+
+    def summary_df(self):
+        cols = ["InChI", "Smiles", "Standard InChI", "Score", "Adduct"]
+        query_descr = f"peaks ≥ {self.min_peaks}; Δ mass ≤ {self.max_delta_mass}"
+        exacts = self.exact_annotations.summary_df().loc[:, cols].rename(lambda x: f"Exact {x} GNPS; {query_descr}", axis=1)
+        analogs = self.analog_annotations.summary_df().loc[:, cols].rename(lambda x: f"Analog {x} GNPS; {query_descr}", axis=1)
+        return exacts.join(analogs)
 
 
 @dataclass(frozen=True)
-class GnpsReadableMatch:
-    inchi: Mol | None
+class GnpsMatch:
+    mol: Mol | None
+    standard_inchi: str | None
     score: float
 
-
-class GnpsIteratedNp:
-    def __init__(self, match_by_attempt: dict[GnpsIterativeAttempt, GnpsReadableMatch]):
-        self.match_by_attempt = match_by_attempt
-
-    def best_match_discounted(self):
-        ordered_attempts = sorted(self.match_by_attempt.keys(), key=lambda x: (-x.min_peaks, x.max_delta_mass))
-        for attempt in ordered_attempts:
-            match = self.match_by_attempt[attempt]
-            if match is not None and match.inchi is not None:
-                # print(f"Best match for {attempt} with discount {attempt.discount}: {match.inchi} with score {match.score} of type {type(match.score)}")
-                return GnpsReadableMatch(match.inchi, match.score * attempt.discount)
+    def __post_init__(self):
+        assert (self.mol is None) == (self.standard_inchi is None)
+        assert 0 <= self.score <= 1
 
 
-@dataclass
-class GnpsTask:
-    cache_dir: Path
-    task_id: str
-
-    def load(self):
-        analog_annotations = GnpsCacher(self.cache_dir).cache_retrieve_analog_annotations(self.task_id)
-        exact_annotations = GnpsCacher(self.cache_dir).cache_retrieve_exact_annotations(self.task_id)
-        parameters_file = GnpsCacher(self.cache_dir).cache_retrieve_parameters(self.task_id)
-        self.analog_isc = GnpsInchiScore(analog_annotations, GnpsParametersFile(parameters_file))
-        self.exact_isc = GnpsInchiScore(exact_annotations, GnpsParametersFile(parameters_file))
-
-    def inchis_scores_both_df(self):
-        return pd.concat([self.analog_isc.inchis_scores_df, self.exact_isc.inchis_scores_df.rename(lambda x: x + " exact", axis=1)], axis=1)
-
-    def inchis_scores_analog_df(self):
-        return self.analog_isc.inchis_scores_df
-
-    def inchis_scores_exact_df(self):
-        return self.exact_isc.inchis_scores_df
-
-    @property
-    def attempt(self):
-        assert self.analog_isc.attempt == self.exact_isc.attempt
-        return self.analog_isc.attempt
-
-    def __eq__(self, other):
-        return self.task_id == other.task_id
-    def __hash__(self):
-        return hash(self.task_id)
-        
-@dataclass
-class GnpsTasks:
-    cache_dir: Path
-    task_ids: set[str]
-
-    def load(self):
-        self.tasks = {task_id: GnpsTask(self.cache_dir, task_id) for task_id in self.task_ids}
-        for task in self.tasks.values():
-            task.load()
-
-    def task_id_to_attempt_df(self):
-        to_peaks = {task.task_id: task.attempt.min_peaks for task in self.tasks.values()}
-        to_delta_mass = {task.task_id: task.attempt.max_delta_mass for task in self.tasks.values()}
-        return pd.DataFrame([to_peaks, to_delta_mass]).T.rename(columns={0: "Min peaks", 1: "Max Δ mass"}).astype({"Min peaks": int}).sort_values(by=["Min peaks", "Max Δ mass"], ascending=[False, True]).rename_axis("Task id")
+class IteratedQueries:
+    def __init__(self, querieds: list[GnpsQueried]):
+        self._all = OrderedDict(sorted({q.query: q for q in querieds}.items()))
+        idss = set([frozenset(q.ids.to_list()) for q in self._all.values()])
+        assert len(idss) <= 1, idss
     
-    def _ordered_attempts(self):
-        if hasattr(self, "__ordered_attempts"):
-            return self.__ordered_attempts
-        all_attempts = [task.attempt for task in self.tasks.values()]
-        self.__ordered_attempts = sorted(all_attempts, key=lambda x: (-x.min_peaks, x.max_delta_mass))
-        return self.__ordered_attempts
+    @classmethod
+    def from_task_ids(cls, task_ids: list[str], cache_dir: os.PathLike):
+        fetcher = GnpsCachingTaskFetcher(cache_dir)
+        queries = [fetcher.queried(task_id) for task_id in task_ids]
+        return cls(queries)
     
-    def inchis_scores_df(self):
-        by_attempt = {task.attempt: task for task in self.tasks.values()}
-        ordered_attempts = self._ordered_attempts()
-        return pd.concat([by_attempt[attempt].inchis_scores_both_df() for attempt in ordered_attempts], axis=1)
-
-    def _match_by_attempt_dict(self, id):
-        match_by_attempt = {}
-        for task in self.tasks.values():
-            short_match_results = task.analog_isc.short_matches()
-            if(id not in short_match_results.keys()):
-                match = None
-            else:
-                match = short_match_results[id]
-            if match is not None:
-                match_by_attempt[task.analog_isc.attempt] = match
-        return match_by_attempt
-
-    def _best_match_discounted(self, id):
-        match_by_attempt = self._match_by_attempt_dict(id)
-        return GnpsIteratedNp(match_by_attempt).best_match_discounted()
-
     def ids(self):
-        return self.inchis_scores_df().index
+        return next(iter(self._all.values())).ids
     
-    def best_matches_discounted(self):
-        return {id: self._best_match_discounted(id) for id in self.ids()}
+    def _best_matches_discounted_series(self):
+        dict = {id: self._best_match_discounted(id) for id in self.ids()}
+        return pd.Series(dict, name="Best matches GNPS iterated").rename_axis("Id")
+        return pd.Index(self.ids()).map(lambda x: self._best_match_discounted(x)).rename("Best matches GNPS iterated")
     
-    def _best_matches_inchi_series(self):
-        return pd.Series(
-        {i: v.inchi if v is not None else None for (i, v) in self.best_matches_discounted().items()}, name="Standard InChI GNPS iterated"
-    )
-    def _best_matches_scores_series(self):
-        return pd.Series(
-        {i: v.score if v is not None else None for (i, v) in self.best_matches_discounted().items()}, name="Score GNPS iterated discounted"
-    )
-    def best_matches_df(self):
-        return pd.concat([self._best_matches_inchi_series(), self._best_matches_scores_series()], axis=1)
-    
-    def all_matches(self):
-        df = pd.concat([self.inchis_scores_df(), self.best_matches_df()], axis=1).sort_index()
-        df.index.name = "Id"
-        return df
+    def _best_match_discounted(self, id):
+        for q in self._all.values():
+            match = q.exact_annotations.matches_series()[id]
+            if match.mol is not None:
+                return GnpsMatch(match.mol, match.standard_inchi, match.score * q.query.discount)
+            
+    def all_df(self):
+        best_matches_discounted = self._best_matches_discounted_series()
+        stds = best_matches_discounted.map(lambda x: x.standard_inchi if x is not None else pd.NA).rename("Standard InChI GNPS iterated")
+        scores = best_matches_discounted.map(lambda x: x.score if x is not None else pd.NA).rename("Score GNPS iterated discounted")
+        all_series = [v.summary_df() for v in self._all.values()] + [stds, scores]
+        return pd.concat(all_series, axis=1)
