@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import json
-from extractor.gnps import GnpsCacher
+from extractor.gnps import IteratedQueries
 from extractor.gnps import GnpsAnnotations
 from extractor.gnps import GnpsIteratedNp
 from extractor.gnps import GnpsParametersFile
@@ -21,6 +21,21 @@ from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
 from extractor.manufactured.datadirs import *
 from collections import Counter
+
+
+TASK_IDS_FILE = GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json"
+
+
+def get_task_ids():
+    with open(TASK_IDS_FILE) as task_ids_data:
+        task_ids = set(json.load(task_ids_data))
+    return task_ids
+
+
+def get_iterated_queries():
+    task_ids = get_task_ids()
+    qs = IteratedQueries.from_task_ids(task_ids, GENERATED_DIR_GNPS_TASKS_CACHED)
+    return qs
 
 
 def clean():
@@ -44,7 +59,7 @@ def generate_gnps_input():
     inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
     compounds["Relative molecular weight"] = inchis.apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)))
     compounds["Precursor m/z"] = mgfs.precursors
-    compounds["Retention time"] = mgfs.retentions
+    compounds["Retention time (sec)"] = mgfs.retentions_sec
     compounds["Precursor m/z − relative molecular weight"] = (
         compounds["Precursor m/z"] - compounds["Relative molecular weight"]
     )
@@ -91,10 +106,6 @@ def compute_isdb():
 def generate_summary():
     GENERATED_DIR_TABLES.mkdir(parents=True, exist_ok=True)
 
-    task_ids_file = GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json"
-    with open(task_ids_file) as task_ids_data:
-        task_ids = set(json.load(task_ids_data))
-
     compounds_file = INPUT_DIR / "Compounds.tsv"
     compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
     names = set(compounds.index.to_list())
@@ -106,7 +117,7 @@ def generate_summary():
     inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
     compounds["Relative molecular weight"] = inchis.apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)))
     compounds["Precursor m/z"] = mgfs.precursors
-    compounds["Retention time"] = mgfs.retentions
+    compounds["Retention time"] = mgfs.retentions_sec
     compounds["Precursor m/z − relative molecular weight"] = (
         compounds["Precursor m/z"] - compounds["Relative molecular weight"]
     )
@@ -115,17 +126,19 @@ def generate_summary():
     ids = compounds_by_id.index
     assert len(set(ids.to_list())) == 96
 
-    ts = GnpsTasks(GENERATED_DIR_TABLES / "Fetched/", task_ids)
-    ts.load()
     compounds_joined = compounds_by_id.join(ts.all_matches())
 
     sirius_df = pd.read_csv(SIRIUS_DIR / "structure_identifications.tsv", sep="\t").set_index("mappingFeatureId")
     sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
     sirius_df["Adduct Sirius"] = sirius_df["adduct"].map(lambda s: s.replace(" ", ""))
-    sirius_df = sirius_df.rename(columns={"InChI": "InChI Sirius"}).loc[:, ["InChI Sirius", "Score Sirius", "Adduct Sirius"]]
+    sirius_df = sirius_df.rename(columns={"InChI": "InChI Sirius"}).loc[
+        :, ["InChI Sirius", "Score Sirius", "Adduct Sirius"]
+    ]
     compounds_joined = compounds_joined.join(sirius_df)
 
-    compounds_joined["Adduct GNPS and Sirius"] = compounds_joined.apply(lambda r: str(dict(Counter(r[r.index.map(lambda c: c.startswith("Adduct "))]))), axis=1)
+    compounds_joined["Adduct GNPS and Sirius"] = compounds_joined.apply(
+        lambda r: str(dict(Counter(r[r.index.map(lambda c: c.startswith("Adduct "))]))), axis=1
+    )
 
     isdb_df = (
         pd.read_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
@@ -207,7 +220,7 @@ def generate_summary():
     # compounds_joined = compounds_joined.join(y_df)
     # compounds_joined["K diff"] = (compounds_joined["K"] - compounds_joined["K Yassine"]).round(4)
     # compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined with Y.tsv", sep="\t")
-    
+
     # selected_columns = compounds_joined.columns.map(lambda s: (s.startswith("Standard InChI GNPS; ")) or (s == "Id"))
     standards = compounds_joined.filter(like="Standard InChI GNPS")
     # columns = standards.columns
@@ -225,20 +238,23 @@ def generate_summary():
     by_k.to_csv(GENERATED_DIR_TABLES / "Compounds by K.tsv", sep="\t")
 
 
-
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
     compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
     assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
     to_emph = {k: "\\emph{" + str(k) + "}" for k in range(91, 97)}
     by_k = (
-        compounds
-        .sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
-        .rename(index = to_emph)
+        compounds.sort_values("Rank min K")
+        .loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
+        .rename(index=to_emph)
         .rename({"Ranks K": "Rank K"}, axis=1)
     )
     inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
     # Percents in smiles may cause problems with csvsimple
-    compounds.drop(columns = inchis).rename(columns=lambda x: x.replace(" ", "")).replace({",": ";", "N\\-demethyl": r"N\\Hyphdash{}demethyl"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
-    compounds.rename(columns=lambda x: x.replace(" ", "").replace("-", "").replace("/", "")).replace({"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
+    compounds.drop(columns=inchis).rename(columns=lambda x: x.replace(" ", "")).replace(
+        {",": ";", "N\\-demethyl": r"N\\Hyphdash{}demethyl"}, regex=True
+    ).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
+    compounds.rename(columns=lambda x: x.replace(" ", "").replace("-", "").replace("/", "")).replace(
+        {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
+    ).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")

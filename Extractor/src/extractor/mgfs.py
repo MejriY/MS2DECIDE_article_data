@@ -6,9 +6,9 @@ class MgfFiles:
     def __init__(self, dir: Path):
         self.dir = dir
         self.files = set(dir.glob("*.mgf"))
-        self._sp_dict = {f.stem: self.__spectrum(f) for f in self.files}
+        self._sp_dict = {f.stem: self._spectrum(f) for f in self.files}
 
-    def __spectrum(self, file):
+    def _spectrum(self, file):
         ss = list(matchms.importing.load_from_mgf(str(file)))
         assert len(ss) == 1
         return ss[0]
@@ -26,5 +26,5 @@ class MgfFiles:
         return pd.Series({n: s.get("precursor_mz") for n, s in self.d.items()})
     
     @property
-    def retentions(self):
+    def retentions_sec(self):
         return pd.Series({n: s.get("retention_time") for n, s in self.d.items()})
