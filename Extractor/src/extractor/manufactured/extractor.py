@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import json
+from extractor.compounds import Compounds
 from extractor.gnps import IteratedQueries
 from extractor.gnps import GnpsAnnotations
 from extractor.gnps import GnpsIteratedNp
@@ -48,47 +49,34 @@ def generate_gnps_input():
     GENERATED_DIR_INPUTS.mkdir(parents=True, exist_ok=True)
 
     compounds_file = INPUT_DIR / "Compounds.tsv"
-    compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
-    names = set(compounds.index.to_list())
+    compounds = Compounds.from_tsv(compounds_file)
+    by_name = compounds.df["Chemical name"].reset_index().set_index("Chemical name").squeeze()
+    names = compounds.df["Chemical name"].to_list()
     assert len(names) == 96
+    assert len(set(names)) == 96
 
     all_annotations = INPUT_DIR / "Mgf files/"
     mgfs = MgfFiles(all_annotations)
     assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
 
-    inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
-    compounds["Relative molecular weight"] = inchis.apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)))
-    compounds["Precursor m/z"] = mgfs.precursors
-    compounds["Retention time (sec)"] = mgfs.retentions_sec
-    compounds["Precursor m/z − relative molecular weight"] = (
-        compounds["Precursor m/z"] - compounds["Relative molecular weight"]
-    )
-
-    d = mgfs.d
-    for name in d.keys():
-        spectrum = d[name]
-        id = compounds.loc[name, "Id"]
+    all_spectra = list()
+    for id in compounds.df["Id"]:
+        name = compounds.df.loc[id, "Chemical name"]
+        spectrum = mgfs.by_name(name)
         spectrum.set("scans", id)
         # No apparent effect when exported; seems that we need to build the spectrum using Spectrum(mz=sp.peaks.mz,intensities=sp.peaks.intensities,metadata=m).
         # spectrum.set("MSLEVEL", 2)
-
-    all_spectra = list()
-    for id in compounds["Id"]:
-        name = compounds[compounds["Id"] == id].index[0]
-        spectrum = d[name]
         all_spectra.append(spectrum)
 
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
     matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All Matchms.mgf"))
     matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All GNPS.mgf"), export_style="gnps")
 
-    qt = pd.DataFrame()
-    qt["row ID"] = compounds["Id"]
-    qt["row m/z"] = compounds["Precursor m/z"]
-    qt["row retention time"] = compounds["Retention time"] / 60.0
-    qt["1.mzXML Peak area"] = 0
-    qt.set_index("row ID", inplace=True)
-    qt.to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
+    compounds.add_relative_molecular_weights()
+    compounds.add_precursors(mgfs.precursors)
+    compounds.add_retention_times(mgfs.retentions_sec)
+    compounds.add_diffs()
+    compounds.quantification_table_minutes().to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
 
 
 def compute_isdb():
@@ -107,26 +95,24 @@ def generate_summary():
     GENERATED_DIR_TABLES.mkdir(parents=True, exist_ok=True)
 
     compounds_file = INPUT_DIR / "Compounds.tsv"
-    compounds = pd.read_csv(compounds_file, sep="\t").set_index("Chemical name")
-    names = set(compounds.index.to_list())
+    compounds_obj = Compounds.from_tsv(compounds_file)
+    ids = compounds_obj.df.index
+    assert len(ids.to_list()) == 96
+    assert len(set(ids.to_list())) == 96
+    names = compounds_obj.df["Chemical name"].to_list()
+    assert len(names) == 96
+    assert len(set(names)) == 96
 
     all_annotations = INPUT_DIR / "Mgf files/"
     mgfs = MgfFiles(all_annotations)
     assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
 
-    inchis = compounds.loc[compounds["InChI"].notna(), "InChI"]
-    compounds["Relative molecular weight"] = inchis.apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)))
-    compounds["Precursor m/z"] = mgfs.precursors
-    compounds["Retention time"] = mgfs.retentions_sec
-    compounds["Precursor m/z − relative molecular weight"] = (
-        compounds["Precursor m/z"] - compounds["Relative molecular weight"]
-    )
+    compounds_obj.add_relative_molecular_weights()
+    compounds_obj.add_precursors(mgfs.precursors)
+    compounds_obj.add_retention_times(mgfs.retentions_sec)
+    compounds_obj.add_diffs()
 
-    compounds_by_id = compounds.reset_index().set_index("Id")
-    ids = compounds_by_id.index
-    assert len(set(ids.to_list())) == 96
-
-    compounds_joined = compounds_by_id.join(ts.all_matches())
+    compounds_joined = compounds_obj.df.join(get_iterated_queries().all_df())
 
     sirius_df = pd.read_csv(SIRIUS_DIR / "structure_identifications.tsv", sep="\t").set_index("mappingFeatureId")
     sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})

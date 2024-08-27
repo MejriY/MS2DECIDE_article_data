@@ -13,6 +13,9 @@ class MgfFiles:
         assert len(ss) == 1
         return ss[0]
     
+    def by_name(self, name):
+        return self._sp_dict.get(name)
+    
     @property
     def prefix_file_names(self):
         return self._sp_dict.keys()
