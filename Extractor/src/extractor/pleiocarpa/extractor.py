@@ -7,7 +7,6 @@ from extractor.gnps import GnpsIteratedNp
 from extractor.gnps import GnpsParametersFile
 from extractor.gnps import GnpsInchiScore
 from extractor.gnps import GnpsTasks
-from extractor.mgfs import MgfFiles
 from extractor.support import add_ranks_columns
 from rdkit import Chem
 from rdkit.Chem import Descriptors

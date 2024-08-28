@@ -1,18 +1,9 @@
-import os
 import pandas as pd
 import json
 from extractor.compounds import Compounds
 from extractor.gnps import IteratedQueries
-from extractor.gnps import GnpsAnnotations
-from extractor.gnps import GnpsIteratedNp
-from extractor.gnps import GnpsParametersFile
-from extractor.gnps import GnpsInchiScore
-from extractor.gnps import GnpsTasks
-from extractor.mgfs import MgfFiles
+from extractor.manufactured.mgfs import MgfFiles
 from extractor.support import add_ranks_columns
-from extractor import support
-from rdkit import Chem
-from rdkit.Chem import Descriptors
 import matchms
 from ms2decide.MgfInstance import MgfInstance
 from ms2decide.Tool import Tool
@@ -48,35 +39,15 @@ def generate_gnps_input():
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
     GENERATED_DIR_INPUTS.mkdir(parents=True, exist_ok=True)
 
-    compounds_file = INPUT_DIR / "Compounds.tsv"
-    compounds = Compounds.from_tsv(compounds_file)
-    by_name = compounds.df["Chemical name"].reset_index().set_index("Chemical name").squeeze()
-    names = compounds.df["Chemical name"].to_list()
-    assert len(names) == 96
-    assert len(set(names)) == 96
+    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv")
+    mgfs = MgfFiles(INPUT_DIR / "Mgf files/", compounds.df["Chemical name"])
 
-    all_annotations = INPUT_DIR / "Mgf files/"
-    mgfs = MgfFiles(all_annotations)
-    assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
-
-    all_spectra = list()
-    for id in compounds.df["Id"]:
-        name = compounds.df.loc[id, "Chemical name"]
-        spectrum = mgfs.by_name(name)
-        spectrum.set("scans", id)
-        # No apparent effect when exported; seems that we need to build the spectrum using Spectrum(mz=sp.peaks.mz,intensities=sp.peaks.intensities,metadata=m).
-        # spectrum.set("MSLEVEL", 2)
-        all_spectra.append(spectrum)
-
+    all_spectra = mgfs.all_spectra()
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
-    matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All Matchms.mgf"))
-    matchms.exporting.save_as_mgf(all_spectra, str(GENERATED_DIR_INPUTS / "All GNPS.mgf"), export_style="gnps")
+    mgfs.export_all_spectra(GENERATED_DIR_INPUTS / "All Matchms.mgf")
+    mgfs.export_all_spectra(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
 
-    compounds.add_relative_molecular_weights()
-    compounds.add_precursors(mgfs.precursors)
-    compounds.add_retention_times(mgfs.retentions_sec)
-    compounds.add_diffs()
-    compounds.quantification_table_minutes().to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
+    compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
 
 
 def compute_isdb():
