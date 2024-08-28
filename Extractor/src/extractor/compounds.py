@@ -1,6 +1,81 @@
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+import json
+from extractor.gnps import IteratedQueries
+from collections import Counter
+from ms2decide.Tool import Tool
+from ms2decide.K import K
+from ms2decide.Tanimotos import Tanimotos
+
+def get_task_ids(task_ids_file):
+    with open(task_ids_file) as task_ids_data:
+        task_ids = set(json.load(task_ids_data))
+    return task_ids
+
+
+def get_iterated_queries(task_ids_file, dir_tasks_cached):
+    task_ids = get_task_ids(task_ids_file)
+    qs = IteratedQueries.from_task_ids(task_ids, dir_tasks_cached)
+    return qs
+
+
+def get_tanimotos_by_id(ids, inchis):
+    tanimotos_by_id = {}
+    for id in ids:
+        inchi_g = inchis.loc[id, "InChI GNPS"]
+        inchi_s = inchis.loc[id, "InChI Sirius"]
+        inchi_i = inchis.loc[id, "InChI ISDB-LOTUS"]
+
+        by_tool = {
+            Tool.GNPS.name: inchi_g if pd.notna(inchi_g) else "*",
+            Tool.SIRIUS.name: inchi_s if pd.notna(inchi_s) else "*",
+            Tool.ISDB.name: inchi_i if pd.notna(inchi_i) else "*",
+        }
+        tanimotos = Tanimotos(by_tool)
+        tanimotos.compute_tanimoto()
+
+        if pd.isna(inchi_g):
+            assert tanimotos.tgs == 0
+            assert tanimotos.tgi == 0
+        if pd.isna(inchi_s):
+            assert tanimotos.tgs == 0
+            assert tanimotos.tsi == 0
+            tanimotos.tgs = 0.25
+            tanimotos.tsi = 0.25
+        assert pd.notna(inchi_i)
+        tanimotos_by_id[id] = tanimotos
+    return tanimotos_by_id
+
+def get_k_series(ids, scores_df, tanimotos_by_id):
+    k_by_id = {}
+    for id in ids:
+        similarities = {
+            Tool.GNPS.name: scores_df.loc[id, "cg"],
+            Tool.SIRIUS.name: scores_df.loc[id, "cs"],
+            Tool.ISDB.name: scores_df.loc[id, "ci"],
+        }
+        tanimotos = tanimotos_by_id[id]
+        k = K(similarities, tanimotos).k()
+        k_by_id[id] = k
+    k_df = pd.Series(k_by_id, name="K")
+    return k_df
+
+def add_ranks_columns(df, rank_min_column, rank_max_column, ranks_column, score_column):
+    df[rank_min_column] = (
+        df[score_column].fillna(0).rank(method="min").astype(int)
+    )
+    df[rank_max_column] = (
+        df[score_column].fillna(0).rank(method="max").astype(int)
+    )
+    df[ranks_column] = df.apply(
+        lambda x: (
+            str(x[rank_min_column])
+            if x[rank_min_column] == x[rank_max_column]
+            else (str(x[rank_min_column]) + "–" + str(x[rank_max_column]))
+        ),
+        axis=1,
+    )
 
 class Compounds:
     def __init__(self, compounds: pd.DataFrame):
@@ -32,4 +107,81 @@ class Compounds:
         qt["row retention time"] = retention_seconds_series / 60.0
         qt["1.mzXML Peak area"] = 0
         return qt
+    
+    def join_iterated_queries(self, task_ids_file, dir_tasks_cached):
+        qs = get_iterated_queries(task_ids_file, dir_tasks_cached)
+        all_df = qs.all_df()
+        self.df = self.df.join(all_df)
+    
+    def join_sirius_data(self, sirius_tsv):
+        sirius_df = pd.read_csv(sirius_tsv, sep="\t").set_index("mappingFeatureId")
+        sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
+        sirius_df["Adduct Sirius"] = sirius_df["adduct"].map(lambda s: s.replace(" ", ""))
+        sirius_df = sirius_df.rename(columns={"InChI": "InChI Sirius"}).loc[
+            :, ["InChI Sirius", "Score Sirius", "Adduct Sirius"]
+        ]
+        self.df = self.df.join(sirius_df)
+
+    def add_adduct_summary(self):
+        self.df["Adduct GNPS and Sirius"] = self.df.apply(
+            lambda r: str(dict(Counter(r[r.index.map(lambda c: c.startswith("Adduct "))]))), axis=1
+        )
+
+    def join_isdb_data(self, isdb_tsv):
+        isdb_df = (
+            pd.read_csv(isdb_tsv, sep="\t")
+            .set_index("Id")
+            .rename(columns={"InChI": "InChI ISDB-LOTUS", "Score": "Score ISDB-LOTUS"})
+        )
+        self.df = self.df.join(isdb_df)
+
+    def join_k_tuples(self):
+        self.df["cg"] = self.df["Score GNPS iterated discounted"].fillna(0)
+        self.df["cs"] = self.df["Score Sirius"].fillna(0.5)
+        assert self.df["Score ISDB-LOTUS"].notna().all()
+        self.df["ci"] = self.df["Score ISDB-LOTUS"]
+
+        inchis_df = pd.DataFrame(self.df.loc[:, ["Standard InChI GNPS iterated", "InChI Sirius", "InChI ISDB-LOTUS"]].rename(columns={"Standard InChI GNPS iterated": "InChI GNPS"}))
+        tanimotos_by_id = get_tanimotos_by_id(self.df.index, inchis_df)
+        tanimoto_values_by_id = {i: {"tgs": t.tgs, "tgi": t.tgi, "tsi": t.tsi} for (i, t) in tanimotos_by_id.items()}
+        tanimotos_df = pd.DataFrame.from_dict(tanimoto_values_by_id, orient="index")
+        self.df = self.df.join(tanimotos_df)
+
+        k_df = get_k_series(self.df.index, self.df, tanimotos_by_id)
+        self.df = self.df.join(k_df)
+
+    def add_ranks(self):
+        add_ranks_columns(
+            self.df,
+            "Rank min GNPS original",
+            "Rank max GNPS original",
+            "Ranks GNPS original",
+            "Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
+        )
+        add_ranks_columns(
+            self.df,
+            "Rank min GNPS iterated",
+            "Rank max GNPS iterated",
+            "Ranks GNPS iterated",
+            "Score GNPS iterated discounted",
+        )
+        add_ranks_columns(self.df, "Rank min Sirius", "Rank max Sirius", "Ranks Sirius", "Score Sirius")
+        add_ranks_columns(
+            self.df, "Rank min ISDB-LOTUS", "Rank max ISDB-LOTUS", "Ranks ISDB-LOTUS", "Score ISDB-LOTUS"
+        )
+        add_ranks_columns(self.df, "Rank min K", "Rank max K", "Ranks K", "K")
+
+    def get_counts(self):
+        # selected_columns = self.df.columns.map(lambda s: (s.startswith("Standard InChI GNPS; ")) or (s == "Id"))
+        standards = self.df.filter(like="Standard InChI GNPS")
+        # columns = standards.columns
+        # es = columns.map(lambda s: s.endswith(" exact"))
+        # ces = columns[es]
+        # nes = columns.map(lambda s: not s.endswith(" exact"))
+        # cnes = columns[nes]
+        # list(ces) + list(cnes)
+        counts = standards.agg("count")
+        counts.index.name = "Column"
+        counts.name = "Count"
+        return counts
     
