@@ -130,7 +130,8 @@ class Compounds:
 
     def add_adduct_summary(self):
         self.df["Adduct GNPS and Sirius"] = self.df.apply(
-            lambda r: str(dict(Counter(r[r.index.map(lambda c: c.startswith("Adduct "))]))), axis=1
+            # lambda r: str(dict(Counter(r[r.index.map(lambda c: c.like("Adduct "))]))), axis=1
+            lambda r: str(dict(Counter(r.filter(like = "Adduct ")))), axis=1
         )
 
     def join_isdb_data(self, isdb_tsv):

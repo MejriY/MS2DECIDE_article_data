@@ -77,20 +77,18 @@ def generate_summary():
 
     compounds.get_counts().to_csv(GENERATED_DIR_TABLES / "Counts.tsv", sep="\t")
 
-    by_k = compounds.df.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]]
-    by_k.to_csv(GENERATED_DIR_TABLES / "Compounds by K.tsv", sep="\t")
+    # by_k = compounds.df.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]]
+    # by_k.to_csv(GENERATED_DIR_TABLES / "Compounds by K.tsv", sep="\t")
 
 
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
-    compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
-    assert (compounds["Rank min K"] == compounds["Rank max K"]).all()
+    compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
     to_emph = {k: "\\emph{" + str(k) + "}" for k in range(91, 97)}
     by_k = (
         compounds.sort_values("Rank min K")
-        .loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
+        .loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]]
         .rename(index=to_emph)
-        .rename({"Ranks K": "Rank K"}, axis=1)
     )
     inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
     # Percents in smiles may cause problems with csvsimple
