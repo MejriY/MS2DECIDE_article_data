@@ -67,10 +67,8 @@ def generate_summary():
     compounds.join_isdb_data(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
     compounds.join_k_tuples()
     compounds.add_ranks()
-    compounds_joined = compounds.df
 
-
-    compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
+    compounds.df.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
     # y_df = support.y_manufactured_df().rename(columns=lambda x: x + " Yassine")
     # compounds_joined = compounds_joined.join(y_df)
@@ -79,7 +77,7 @@ def generate_summary():
 
     compounds.get_counts().to_csv(GENERATED_DIR_TABLES / "Counts.tsv", sep="\t")
 
-    by_k = compounds_joined.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
+    by_k = compounds.df.sort_values("Rank min K").loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]]
     by_k.to_csv(GENERATED_DIR_TABLES / "Compounds by K.tsv", sep="\t")
 
 

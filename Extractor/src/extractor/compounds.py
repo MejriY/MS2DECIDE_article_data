@@ -61,7 +61,11 @@ def get_k_series(ids, scores_df, tanimotos_by_id):
     k_df = pd.Series(k_by_id, name="K")
     return k_df
 
-def add_ranks_columns(df, rank_min_column, rank_max_column, ranks_column, score_column):
+def add_ranks_columns(df, column_name, score_column):
+    rank_min_column = f"Rank min {column_name}"
+    rank_max_column = f"Rank max {column_name}"
+    ranks_column = f"Ranks {column_name}"
+    rank_column = f"Rank {column_name}"
     df[rank_min_column] = (
         df[score_column].fillna(0).rank(method="min").astype(int)
     )
@@ -76,6 +80,8 @@ def add_ranks_columns(df, rank_min_column, rank_max_column, ranks_column, score_
         ),
         axis=1,
     )
+    if (df[rank_min_column] == df[rank_max_column]).all():
+        df.rename(columns={ranks_column: rank_column}, inplace=True)
 
 class Compounds:
     def __init__(self, compounds: pd.DataFrame):
@@ -153,23 +159,19 @@ class Compounds:
     def add_ranks(self):
         add_ranks_columns(
             self.df,
-            "Rank min GNPS original",
-            "Rank max GNPS original",
-            "Ranks GNPS original",
+            "GNPS original",
             "Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
         )
         add_ranks_columns(
             self.df,
-            "Rank min GNPS iterated",
-            "Rank max GNPS iterated",
-            "Ranks GNPS iterated",
+            "GNPS iterated",
             "Score GNPS iterated discounted",
         )
-        add_ranks_columns(self.df, "Rank min Sirius", "Rank max Sirius", "Ranks Sirius", "Score Sirius")
+        add_ranks_columns(self.df, "Sirius", "Score Sirius")
         add_ranks_columns(
-            self.df, "Rank min ISDB-LOTUS", "Rank max ISDB-LOTUS", "Ranks ISDB-LOTUS", "Score ISDB-LOTUS"
+            self.df, "ISDB-LOTUS", "Score ISDB-LOTUS"
         )
-        add_ranks_columns(self.df, "Rank min K", "Rank max K", "Ranks K", "K")
+        add_ranks_columns(self.df, "K", "K")
 
     def get_counts(self):
         # selected_columns = self.df.columns.map(lambda s: (s.startswith("Standard InChI GNPS; ")) or (s == "Id"))
