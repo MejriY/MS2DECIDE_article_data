@@ -12,6 +12,8 @@ from github import Github
 from github import Auth
 from github import ContentFile
 import extractor.manufactured.datadirs as mdirs
+from ms2decide.MgfInstance import MgfInstance
+from ms2decide.IsdbAnnotation import get_cfm_annotation
 
 def unreported_ones():
     compounds_manufactured = pd.read_csv(mdirs.GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
@@ -66,3 +68,14 @@ def y_manufactured_df(auth_path = PurePath(".")):
         content_decoded = contents.decoded_content.decode("utf-8")
         assert content_decoded.startswith("ID\t"), content_decoded
     return pd.read_csv(StringIO(content_decoded), sep="\t").rename(columns={"ID": "Id"}).set_index("Id")
+
+def compute_isdb(input_mgf, output_tsv):
+    mgf = MgfInstance(input_mgf)
+    l = get_cfm_annotation(mgf)
+    inchis = pd.Series({k: m.inchi for (k, m) in l.items()})
+    scores = pd.Series({k: m.score for (k, m) in l.items()})
+    df = pd.DataFrame({"InChI": inchis, "Score": scores}).replace({"#": None})
+    df.index.name = "Id"
+
+    output_tsv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(output_tsv, sep="\t")

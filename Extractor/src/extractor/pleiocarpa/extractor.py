@@ -1,13 +1,7 @@
 import os
 import pandas as pd
 import json
-from extractor.gnps import GnpsCacher
 from extractor.gnps import GnpsAnnotations
-from extractor.gnps import GnpsIteratedNp
-from extractor.gnps import GnpsParametersFile
-from extractor.gnps import GnpsInchiScore
-from extractor.gnps import GnpsTasks
-from extractor.support import add_ranks_columns
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 import matchms
@@ -22,19 +16,7 @@ from collections import Counter
 import extractor.support as support
 
 def compute_isdb():
-    GENERATED_DIR_ISDB.mkdir(parents=True, exist_ok=True)
-
-    mgf = MgfInstance(INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf")
-    l = get_cfm_annotation(mgf)
-    inchis = pd.Series({k: m.inchi for (k, m) in l.items()})
-    scores = pd.Series({k: m.score for (k, m) in l.items()})
-    df = pd.DataFrame({"InChI": inchis, "Score": scores})
-    df.index.name = "Id"
-    df.to_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
-
-def transform_isdb():
-    df = pd.read_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t").set_index("Id")
-    df.replace({"#": None}).to_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
+    support.compute_isdb(INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
 
 def generate_summary():
     GENERATED_DIR_TABLES.mkdir(parents=True, exist_ok=True)
@@ -221,7 +203,7 @@ def generate_article_data():
     compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
     by_k.rename(columns=lambda x: x.replace(" ", "")).replace({",": ";"}, regex=True).replace({"{": ""}, regex=True).replace({"}": ""}, regex=True).replace({"'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
     
-# compute_isdb()
+compute_isdb()
 # transform_isdb()
-generate_summary()
-generate_article_data()
+# generate_summary()
+# generate_article_data()

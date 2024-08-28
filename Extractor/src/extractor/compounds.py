@@ -41,9 +41,12 @@ def get_tanimotos_by_id(ids, inchis):
         if pd.isna(inchi_s):
             assert tanimotos.tgs == 0
             assert tanimotos.tsi == 0
+        if pd.isna(inchi_i):
+            assert tanimotos.tgi == 0
+            assert tanimotos.tsi == 0
+        if pd.isna(inchi_s):
             tanimotos.tgs = 0.25
             tanimotos.tsi = 0.25
-        assert pd.notna(inchi_i)
         tanimotos_by_id[id] = tanimotos
     return tanimotos_by_id
 

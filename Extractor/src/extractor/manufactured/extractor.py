@@ -9,7 +9,7 @@ from ms2decide.IsdbAnnotation import get_cfm_annotation
 from shutil import rmtree
 from extractor.manufactured.datadirs import *
 from rdkit import RDLogger
-
+import extractor.support as support
 
 TASK_IDS_FILE = GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json"
 
@@ -34,16 +34,7 @@ def generate_gnps_input():
     compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
 
 def compute_isdb():
-    GENERATED_DIR_ISDB.mkdir(parents=True, exist_ok=True)
-
-    mgf = MgfInstance(GENERATED_DIR_INPUTS / "All GNPS.mgf")
-    l = get_cfm_annotation(mgf)
-    inchis = pd.Series({k: m.inchi for (k, m) in l.items()})
-    scores = pd.Series({k: m.score for (k, m) in l.items()})
-    df = pd.DataFrame({"InChI": inchis, "Score": scores})
-    df.index.name = "Id"
-    df.to_csv(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", sep="\t")
-
+    support.compute_isdb(GENERATED_DIR_INPUTS / "All GNPS.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
 
 def generate_summary():
     RDLogger.DisableLog("rdApp.*")
