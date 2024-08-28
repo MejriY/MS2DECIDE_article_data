@@ -333,9 +333,10 @@ class GnpsQueried:
     def summary_df(self):
         cols = ["InChI", "Smiles", "Standard InChI", "Score", "Adduct"]
         query_descr = f"peaks ≥ {self.min_peaks}; Δ mass ≤ {self.max_delta_mass}"
-        exacts = self.exact_annotations.summary_df().loc[:, cols].rename(lambda x: f"Exact {x} GNPS; {query_descr}", axis=1)
-        analogs = self.analog_annotations.summary_df().loc[:, cols].rename(lambda x: f"Analog {x} GNPS; {query_descr}", axis=1)
-        return exacts.join(analogs)
+        analogs = self.analog_annotations.summary_df().loc[:, cols].rename(lambda x: f"{x} GNPS; {query_descr}", axis=1)
+        exacts = self.exact_annotations.summary_df().loc[:, cols].rename(lambda x: f"exact {x} GNPS; {query_descr}", axis=1)
+        # analogs = self.analog_annotations.summary_df().loc[:, cols].rename(lambda x: f"Analog {x} GNPS; {query_descr}", axis=1)
+        return analogs.join(exacts)
 
 
 @dataclass(frozen=True)

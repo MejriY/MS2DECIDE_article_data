@@ -154,7 +154,7 @@ def generate_summary():
         "Rank min GNPS original",
         "Rank max GNPS original",
         "Ranks GNPS original",
-        "Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
+        "Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
     )
     add_ranks_columns(
         compounds_joined,
