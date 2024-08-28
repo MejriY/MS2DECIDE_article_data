@@ -13,6 +13,7 @@ from ms2decide.Tanimotos import Tanimotos
 from shutil import rmtree
 from extractor.manufactured.datadirs import *
 from collections import Counter
+from rdkit import RDLogger
 
 
 TASK_IDS_FILE = GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json"
@@ -63,27 +64,24 @@ def compute_isdb():
 
 
 def generate_summary():
+    RDLogger.DisableLog("rdApp.*")
+
     GENERATED_DIR_TABLES.mkdir(parents=True, exist_ok=True)
 
-    compounds_file = INPUT_DIR / "Compounds.tsv"
-    compounds_obj = Compounds.from_tsv(compounds_file)
-    ids = compounds_obj.df.index
-    assert len(ids.to_list()) == 96
-    assert len(set(ids.to_list())) == 96
-    names = compounds_obj.df["Chemical name"].to_list()
-    assert len(names) == 96
-    assert len(set(names)) == 96
+    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv")
+    mgfs = MgfFiles(INPUT_DIR / "Mgf files/", compounds.df["Chemical name"])
+    ids = compounds.df.index
 
-    all_annotations = INPUT_DIR / "Mgf files/"
-    mgfs = MgfFiles(all_annotations)
-    assert mgfs.d.keys() == names, set(names) - set(mgfs.d.keys())
+    col1 = compounds.df.pop("Reported")
+    compounds.df.insert(1, "Reported", col1)
+    compounds.add_relative_molecular_weights()
+    compounds.add_precursors(mgfs.precursors_series())
+    compounds.add_retention_times(mgfs.retentions_seconds_series())
+    compounds.add_diffs()
 
-    compounds_obj.add_relative_molecular_weights()
-    compounds_obj.add_precursors(mgfs.precursors)
-    compounds_obj.add_retention_times(mgfs.retentions_sec)
-    compounds_obj.add_diffs()
-
-    compounds_joined = compounds_obj.df.join(get_iterated_queries().all_df())
+    qs = get_iterated_queries()
+    all_df = qs.all_df()
+    compounds_joined = compounds.df.join(all_df)
 
     sirius_df = pd.read_csv(SIRIUS_DIR / "structure_identifications.tsv", sep="\t").set_index("mappingFeatureId")
     sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
@@ -156,7 +154,7 @@ def generate_summary():
         "Rank min GNPS original",
         "Rank max GNPS original",
         "Ranks GNPS original",
-        "Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
+        "Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
     )
     add_ranks_columns(
         compounds_joined,

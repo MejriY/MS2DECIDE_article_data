@@ -265,7 +265,7 @@ class GnpsCachingTaskFetcher:
         return GnpsParameters(data)
 
     def queried(self, task_id: str):
-        return GnpsQueried(self.parameters(task_id).to_query, self.exact_annotations(task_id), self.analog_annotations(task_id))
+        return GnpsQueried(self.parameters(task_id).to_query(), self.exact_annotations(task_id), self.analog_annotations(task_id))
 
 @dataclass(frozen=True)
 class GnpsInchiSmiles:
@@ -316,9 +316,6 @@ class GnpsQueried:
     exact_annotations: GnpsAnnotations
     analog_annotations: GnpsAnnotations
 
-    def __post_init__(self):
-        assert self.exact_annotations.ids().equals(self.analog_annotations.ids())
-
     @property
     def min_peaks(self):
         return self.query.min_peaks
@@ -329,7 +326,9 @@ class GnpsQueried:
 
     @property
     def ids(self):
-        return self.exact_annotations.ids()
+        exact_ids = self.exact_annotations.ids()
+        analog_ids = self.analog_annotations.ids()
+        return exact_ids.union(analog_ids).sort_values()
 
     def summary_df(self):
         cols = ["InChI", "Smiles", "Standard InChI", "Score", "Adduct"]
@@ -353,8 +352,9 @@ class GnpsMatch:
 class IteratedQueries:
     def __init__(self, querieds: list[GnpsQueried]):
         self._all = OrderedDict(sorted({q.query: q for q in querieds}.items()))
-        idss = set([frozenset(q.ids.to_list()) for q in self._all.values()])
-        assert len(idss) <= 1, idss
+        self._ids = set()
+        for q in self._all.values():
+            self._ids.update(q.ids.to_list())
     
     @classmethod
     def from_task_ids(cls, task_ids: list[str], cache_dir: os.PathLike):
@@ -363,17 +363,17 @@ class IteratedQueries:
         return cls(queries)
     
     def ids(self):
-        return next(iter(self._all.values())).ids
+        return self._ids
     
     def _best_matches_discounted_series(self):
         dict = {id: self._best_match_discounted(id) for id in self.ids()}
         return pd.Series(dict, name="Best matches GNPS iterated").rename_axis("Id")
-        return pd.Index(self.ids()).map(lambda x: self._best_match_discounted(x)).rename("Best matches GNPS iterated")
+        # return pd.Index(self.ids()).map(lambda x: self._best_match_discounted(x)).rename("Best matches GNPS iterated")
     
     def _best_match_discounted(self, id):
         for q in self._all.values():
-            match = q.exact_annotations.matches_series()[id]
-            if match.mol is not None:
+            match = q.analog_annotations.matches_series()[id] if id in q.analog_annotations.ids() else None
+            if getattr(match, "mol", None) is not None:
                 return GnpsMatch(match.mol, match.standard_inchi, match.score * q.query.discount)
             
     def all_df(self):

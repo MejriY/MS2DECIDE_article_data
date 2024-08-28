@@ -57,6 +57,11 @@ def test_parameters():
     ps = GnpsParameters.from_file(input_path).all()
     assert len(ps) == 37
 
+def test_fetch_live():
+    task_id = "1c3cbef069874546aca7cca96cb01a05"
+    assert GnpsTaskFetcher(task_id).done()
+    # assert a.raw_df().shape == (95, 47)
+
 @responses.activate
 def test_caching_done(tmp_path):
     task_id = "1c3cbef069874546aca7cca96cb01a05"
