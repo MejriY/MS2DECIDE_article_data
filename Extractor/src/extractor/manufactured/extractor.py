@@ -11,9 +11,6 @@ from extractor.manufactured.datadirs import *
 from rdkit import RDLogger
 import extractor.support as support
 
-TASK_IDS_FILE = GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json"
-
-
 def clean():
     assert rmtree.avoids_symlink_attacks
     rmtree(GENERATED_DIR)
@@ -52,7 +49,7 @@ def generate_summary():
     compounds.add_retention_times(mgfs.retentions_seconds_series())
     compounds.add_diffs()
 
-    compounds.join_iterated_queries(TASK_IDS_FILE, GENERATED_DIR_GNPS_TASKS_CACHED)
+    compounds.join_iterated_queries(GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_GNPS_TASKS_CACHED)
     compounds.join_sirius_data(SIRIUS_DIR / "structure_identifications.tsv")
     compounds.add_adduct_summary()
     compounds.join_isdb_data(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
@@ -77,7 +74,7 @@ def generate_article_data():
     compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
     to_emph = {k: "\\emph{" + str(k) + "}" for k in range(91, 97)}
     by_k = (
-        compounds.sort_values("Rank min K")
+        compounds.sort_values(by = ["Rank min K", "Id"])
         .loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]]
         .rename(index=to_emph)
     )

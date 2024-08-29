@@ -133,7 +133,6 @@ class Compounds:
 
     def add_adduct_summary(self):
         self.df["Adduct GNPS and Sirius"] = self.df.apply(
-            # lambda r: str(dict(Counter(r[r.index.map(lambda c: c.like("Adduct "))]))), axis=1
             lambda r: str(dict(Counter(r.filter(like = "Adduct ")))), axis=1
         )
 
@@ -191,3 +190,9 @@ class Compounds:
         counts.name = "Count"
         return counts
     
+    def prefix_semantic_ids(self):
+        duplicated_precursors_indices = self.df.set_index("Precursor m/z").index.duplicated(keep=False)
+        duplicated_precursors = self.df.set_index("Precursor m/z").index[duplicated_precursors_indices]
+        sids = self.df.apply(lambda r: (str(r["Precursor m/z"]) + ";" + str(r["Retention time"])) if r["Precursor m/z"] in duplicated_precursors else r["Precursor m/z"], axis=1)
+        assert sids.duplicated().sum() == 0
+        self.df.insert(0, "Semantic id", sids)
