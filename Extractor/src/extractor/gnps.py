@@ -15,6 +15,7 @@ from functools import cached_property
 from functools import cache
 from functools import total_ordering
 from collections import OrderedDict
+import numpy as np
 
 def discounts():
     discs = _get_iterative_parameters()
@@ -379,6 +380,7 @@ class IteratedQueries:
     def all_df(self):
         best_matches_discounted = self._best_matches_discounted_series()
         stds = best_matches_discounted.map(lambda x: x.standard_inchi if x is not None else pd.NA).rename("Standard InChI GNPS iterated")
-        scores = best_matches_discounted.map(lambda x: x.score if x is not None else pd.NA).rename("Score GNPS iterated discounted")
+        scores = best_matches_discounted.map(lambda x: x.score if x is not None else np.NAN).rename("Score GNPS iterated discounted")
+        assert scores.dtype == float
         all_series = [v.summary_df() for v in self._all.values()] + [stds, scores]
         return pd.concat(all_series, axis=1)

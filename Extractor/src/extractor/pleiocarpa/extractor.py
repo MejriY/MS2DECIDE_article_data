@@ -101,18 +101,17 @@ def generate_summary():
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
 
-    # os.chdir("Data/Extractor/")
     # unreported_df = support.unreported_ones()
     # rounded_unreported_masses = unreported_df["Precursor m/z"].map(lambda p: round(p))
 
-    compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
+    compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
     # compounds["Unreported"] = compounds["Precursor m/z"].map(lambda p: round(p) in rounded_unreported_masses)
     by_k = (
-        compounds.sort_values(by = ["Rank min K", "Semantic id"])
+        compounds.sort_values(by = ["Rank min K", "Precursor m/z", "Retention time (seconds)"])
         .loc[:, ["Semantic id", "Adduct GNPS and Sirius", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     )
     compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
-    by_k.rename(columns=lambda x: x.replace(" ", "")).replace({"{": ""}, regex=True).replace({"}": ""}, regex=True).replace({"'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
+    by_k.rename(columns=lambda x: x.replace(" ", "")).replace({"{": "", "}": "", "'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
     
 # compute_isdb()
 # generate_summary()
