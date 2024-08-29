@@ -78,12 +78,9 @@ def generate_article_data():
         .loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]]
         .rename(index=to_emph)
     )
-    inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
-    # Percents in smiles may cause problems with csvsimple
-    compounds.drop(columns=inchis).rename(columns=lambda x: x.replace(" ", "")).replace(
-        {",": ";", "N\\-demethyl": r"N\\Hyphdash{}demethyl"}, regex=True
-    ).to_csv(GENERATED_DIR_ARTICLE / "Compounds.csv")
+    # inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
+    # compounds.drop(columns=inchis).rename(columns=lambda x: x.replace(" ", "")).replace(
     compounds.rename(columns=lambda x: x.replace(" ", "").replace("-", "").replace("/", "")).replace(
         {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
     ).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
-    by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.csv")
+    by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
