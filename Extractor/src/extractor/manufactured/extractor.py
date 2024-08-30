@@ -1,11 +1,7 @@
 import pandas as pd
 import json
 from extractor.compounds import Compounds
-from extractor.gnps import IteratedQueries
 from extractor.manufactured.mgfs import MgfFiles
-import matchms
-from ms2decide.MgfInstance import MgfInstance
-from ms2decide.IsdbAnnotation import get_cfm_annotation
 from shutil import rmtree
 from extractor.manufactured.datadirs import *
 from rdkit import RDLogger
@@ -13,7 +9,10 @@ import extractor.support as support
 
 def clean():
     assert rmtree.avoids_symlink_attacks
-    rmtree(GENERATED_DIR)
+    if GENERATED_DIR.exists():
+        rmtree(GENERATED_DIR)
+    if GENERATED_DIR_ARTICLE.exists():
+        rmtree(GENERATED_DIR_ARTICLE)
 
 
 def generate_gnps_input():
@@ -23,7 +22,6 @@ def generate_gnps_input():
     compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv")
     mgfs = MgfFiles(INPUT_DIR / "Mgf files/", compounds.df["Chemical name"])
 
-    all_spectra = mgfs.all_spectra()
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
     mgfs.export_all_spectra(GENERATED_DIR_INPUTS / "All Matchms.mgf")
     mgfs.export_all_spectra(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
@@ -49,7 +47,7 @@ def generate_summary():
     compounds.add_retention_times(mgfs.retentions_seconds_series())
     compounds.add_diffs()
 
-    compounds.join_iterated_queries(GENERATED_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_GNPS_TASKS_CACHED)
+    compounds.join_iterated_queries(INPUT_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_GNPS_TASKS_CACHED)
     compounds.join_sirius_data(SIRIUS_DIR / "structure_identifications.tsv")
     compounds.add_adduct_summary()
     compounds.join_isdb_data(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")

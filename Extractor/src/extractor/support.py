@@ -14,6 +14,12 @@ from github import ContentFile
 import extractor.manufactured.datadirs as mdirs
 from ms2decide.MgfInstance import MgfInstance
 from ms2decide.IsdbAnnotation import get_cfm_annotation
+import extractor.manufactured.extractor as manufextractor
+import extractor.pleiocarpa.extractor as pleioextractor
+
+def clean():
+    manufextractor.clean()
+    pleioextractor.clean()
 
 def unreported_ones():
     compounds_manufactured = pd.read_csv(mdirs.GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")

@@ -17,6 +17,13 @@ import extractor.support as support
 from extractor.compounds import Compounds
 from rdkit import RDLogger
 
+def clean():
+    assert rmtree.avoids_symlink_attacks
+    if GENERATED_DIR.exists():
+        rmtree(GENERATED_DIR)
+    if GENERATED_DIR_ARTICLE.exists():
+        rmtree(GENERATED_DIR_ARTICLE)
+
 def compute_isdb():
     support.compute_isdb(INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
 
@@ -113,6 +120,3 @@ def generate_article_data():
     compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     by_k.rename(columns=lambda x: x.replace(" ", "")).replace({"{": "", "}": "", "'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
     
-# compute_isdb()
-# generate_summary()
-generate_article_data()

@@ -15,7 +15,9 @@ manuf-send = "extractor.manufactured.sender:send"
 manuf-isdb = "extractor.manufactured.extractor:compute_isdb"
 manuf-gensummary = "extractor.manufactured.extractor:generate_summary"
 manuf-genarticle = "extractor.manufactured.extractor:generate_article_data"
+pleio-isdb = "extractor.pleiocarpa.extractor:compute_isdb"
 pleio-gensummary = "extractor.pleiocarpa.extractor:generate_summary"
+pleio-genarticle = "extractor.pleiocarpa.extractor:generate_article_data"
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
