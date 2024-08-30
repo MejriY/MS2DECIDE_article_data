@@ -9,12 +9,14 @@ version = "0.0.1"
 dependencies = ["rdkit", "matchms", "numpy", "pandas", "requests", "PyGithub", "jupyter", "pytest", "responses"]
 
 [project.scripts]
+clean = "extractor.support:clean"
 manuf-clean = "extractor.manufactured.extractor:clean"
 manuf-geninput = "extractor.manufactured.extractor:generate_gnps_input"
 manuf-send = "extractor.manufactured.sender:send"
 manuf-isdb = "extractor.manufactured.extractor:compute_isdb"
 manuf-gensummary = "extractor.manufactured.extractor:generate_summary"
 manuf-genarticle = "extractor.manufactured.extractor:generate_article_data"
+pleio-clean = "extractor.pleiocarpa.extractor:clean"
 pleio-isdb = "extractor.pleiocarpa.extractor:compute_isdb"
 pleio-gensummary = "extractor.pleiocarpa.extractor:generate_summary"
 pleio-genarticle = "extractor.pleiocarpa.extractor:generate_article_data"
