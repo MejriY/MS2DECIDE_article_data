@@ -80,8 +80,8 @@ def compute_isdb(input_mgf, output_tsv):
     l = get_cfm_annotation(mgf)
     inchis = pd.Series({k: m.inchi for (k, m) in l.items()})
     scores = pd.Series({k: m.score for (k, m) in l.items()})
-    df = pd.DataFrame({"InChI": inchis, "Score": scores}).replace({"#": None})
+    # Let’s stick to a slightly more reasonable number of significant digits, the file is not stable after export-import
+    df = pd.DataFrame({"InChI": inchis, "Score": scores}).replace({"#": None}).astype({"Score": float}).assign(Score = lambda x: x["Score"].map(lambda f: round(f, 14), na_action="ignore"))
     df.index.name = "Id"
-
     output_tsv.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_tsv, sep="\t")
