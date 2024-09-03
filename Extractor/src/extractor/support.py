@@ -16,6 +16,12 @@ from ms2decide.MgfInstance import MgfInstance
 from ms2decide.IsdbAnnotation import get_cfm_annotation
 import extractor.manufactured.extractor as manufextractor
 import extractor.pleiocarpa.extractor as pleioextractor
+import pandas as pd
+from zipfile import ZipFile 
+import zipfile
+from extractor.gnps import GnpsFile
+import json
+import extractor.gnps as gnps
 
 def clean():
     manufextractor.clean()
@@ -92,3 +98,12 @@ def write_task_ids(d_jobs):
     all_ids = [v for d in ids_by_first.values() for v in d]
     with open("Gnps task ids.json", 'w') as f:
         f.write(json.dumps(all_ids))
+
+def from_zip(zip_file, internal_path):
+    # zip_file = "tests/resources/ProteoSAFe-FEATURE-BASED-MOLECULAR-NETWORKING-26a5cbca-view_all_analog_annotations_DB.zip"
+    # internal_path = "DB_result/75b94088c0f24a0eb8b064b380300649.tsv"
+    with ZipFile(zip_file) as myzip:
+        with myzip.open(internal_path) as myfile:
+            dfz = pd.read_csv(myfile, sep="\t")
+            assert dfz.shape == (71, 46)
+
