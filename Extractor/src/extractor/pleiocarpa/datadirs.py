@@ -11,3 +11,5 @@ GENERATED_DIR_ARTICLE = REPO_DIR / "../" / "Article/" / "Generated/" / "Pleiocar
 INPUT_DIR = REPO_DIR / "Pleiocarpa case/"
 INPUT_DIR_GNPS_TASKS = INPUT_DIR / "4 - GNPS iterative/"
 INPUT_DIR_SIRIUS = INPUT_DIR / "5 - Sirius/"
+INPUT_DIR_CYTOSCAPE = INPUT_DIR / "8 - Cytoscape/"
+
