@@ -92,8 +92,11 @@ def generate_summary():
     compounds.join_k_tuples()
     compounds.add_ranks()
     compounds.prefix_semantic_ids()
-    compounds_joined = compounds.df
+    compounds_joined = compounds.df.reset_index().set_index("Semantic id")
 
+    adducts_df = pd.read_csv(INPUT_DIR / "Adducts.tsv", sep="\t").set_index("Semantic id")
+    compounds_joined = compounds_joined.join(adducts_df).rename({"Adduct": "Adduct manual"}, axis=1)
+    
     compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
     counts = compounds_joined.filter(like="Standard InChI GNPS").agg("count")
@@ -120,10 +123,12 @@ def generate_article_data():
 
     compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
     # compounds["Unreported"] = compounds["Precursor m/z"].map(lambda p: round(p) in rounded_unreported_masses)
+    adduct_series = compounds.apply(lambda row: (row["Adduct manual"] if pd.notna(row["Adduct manual"]) else row["Adduct GNPS and Sirius"]), axis=1)
     by_k = (
-        compounds.sort_values(by = ["Rank min K", "Precursor m/z", "Retention time (seconds)"])
-        .loc[:, ["Semantic id", "Adduct GNPS and Sirius", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
-    )
-    compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
+        compounds.sort_values(by = ["Rank min K", "Precursor m/z", "Retention time (seconds)"]))
+    by_k.insert(0, "Adduct", adduct_series)
+    by_k = by_k.loc[:, ["Semantic id", "Adduct", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
     by_k.rename(columns=lambda x: x.replace(" ", "")).replace({"{": "", "}": "", "'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
+    
+    compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     
