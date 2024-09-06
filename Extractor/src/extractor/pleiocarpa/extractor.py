@@ -92,8 +92,11 @@ def generate_summary():
     compounds.join_k_tuples()
     compounds.add_ranks()
     compounds.prefix_semantic_ids()
-    compounds_joined = compounds.df
+    compounds_joined = compounds.df.set_index("Semantic id")
 
+    adducts_df = pd.read_csv(INPUT_DIR / "Adducts.tsv", sep="\t").set_index("Semantic id")
+    compounds_joined = compounds_joined.join(adducts_df)
+    
     compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
     counts = compounds_joined.filter(like="Standard InChI GNPS").agg("count")

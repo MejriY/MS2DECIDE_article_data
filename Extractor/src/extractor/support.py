@@ -19,7 +19,6 @@ import extractor.pleiocarpa.extractor as pleioextractor
 import pandas as pd
 from zipfile import ZipFile 
 import zipfile
-from extractor.gnps import GnpsFile
 import json
 import extractor.gnps as gnps
 

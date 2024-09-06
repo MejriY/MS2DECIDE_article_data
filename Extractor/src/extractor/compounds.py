@@ -193,6 +193,8 @@ class Compounds:
     def prefix_semantic_ids(self):
         duplicated_precursors_indices = self.df.set_index("Precursor m/z").index.duplicated(keep=False)
         duplicated_precursors = self.df.set_index("Precursor m/z").index[duplicated_precursors_indices]
-        sids = self.df.apply(lambda r: (str(r["Precursor m/z"]) + ";" + str(r["Retention time (seconds)"])) if r["Precursor m/z"] in duplicated_precursors else r["Precursor m/z"], axis=1)
+        sids = self.df.apply(lambda r: (str(r["Precursor m/z"]) + ";" + str(r["Retention time (seconds)"])) if r["Precursor m/z"] in duplicated_precursors else str(r["Precursor m/z"]), axis=1)
         assert sids.duplicated().sum() == 0
+        assert (sids.dtype.name == "object")
+        assert (sids.map(type).eq(str).all())
         self.df.insert(0, "Semantic id", sids)

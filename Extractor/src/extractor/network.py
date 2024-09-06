@@ -6,7 +6,6 @@ from pathlib import Path
 import py4cytoscape as p4c
 from zipfile import ZipFile
 import io
-import fs
 from IPython.display import SVG, display
 import networkx as nx
 from functools import cached_property
