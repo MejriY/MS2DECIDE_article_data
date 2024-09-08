@@ -16,7 +16,6 @@ from collections import Counter
 import extractor.support as support
 from extractor.compounds import Compounds
 from rdkit import RDLogger
-from extractor.network import Network
 
 def clean():
     assert rmtree.avoids_symlink_attacks
@@ -110,10 +109,12 @@ def generate_summary():
     # compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds with Yassine.tsv", sep="\t")
 
 def generate_network_data():
+# merely importing this creates a logs directory
+# from extractor.network import Network
     # Unfinished business
     compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
-    net = Network(INPUT_DIR_CYTOSCAPE / "network_k.cys", compounds)
-    net.export()
+#     net = Network(INPUT_DIR_CYTOSCAPE / "network_k.cys", compounds)
+#     net.export()
 
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
