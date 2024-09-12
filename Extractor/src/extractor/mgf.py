@@ -5,7 +5,7 @@ from functools import cache
 
 class Mgf:
     def __init__(self, file: Path):
-        spectra = list(matchms.importing.load_from_mgf(str(file)))
+        spectra = matchms.importing.load_from_mgf(str(file))
         metadatas = [s.metadata for s in spectra]
         df = pd.DataFrame(metadatas).astype({"feature_id": int, "scans": int})
         df_orig_features = set(df["feature_id"])
