@@ -1,5 +1,6 @@
 import pandas as pd
 from extractor import support
+from extractor.mgf import Mgf
 from pathlib import PurePath
 import json
 import xml.etree.ElementTree as ET
@@ -15,6 +16,7 @@ from pathlib import Path
 from rdkit import Chem
 from rdkit import RDLogger
 import re
+import matchms
 
 def test_read_df_manual():
     json_file = "tests/resources/26a5cbca3e844cc0b126f992c69df832.json"
@@ -122,3 +124,12 @@ def test_dl():
         content_encoded = contents.content
         content_decoded = contents.decoded_content.decode("utf-8")
         assert content_decoded.startswith("ID\t"), content_decoded
+
+def test_pepmass_digits():
+    input_path = Path("tests/resources/Pleiocarpa.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (s, ) = [s for s in spectras if s.metadata_dict().get("feature_id") == "39"]
+    assert s.metadata_dict()["precursor_mz"] == 141.104
+    mgf = Mgf(input_path)
+    print(mgf.df.columns)
+    assert mgf.df.loc[39, "precursor_mz"] == 141.104
