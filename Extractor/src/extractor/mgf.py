@@ -8,14 +8,14 @@ class Mgf:
         spectra = list(matchms.importing.load_from_mgf(str(file)))
         metadatas = [s.metadata for s in spectra]
         df = pd.DataFrame(metadatas).astype({"feature_id": int, "scans": int})
-        df_2_orig_features = set(df["feature_id"])
+        df_orig_features = set(df["feature_id"])
         if("spectype" in df.columns):
             corr = df["spectype"] == "CORRELATED MS"
             l1 = (df["ms_level"] == "1")
             to_remove = df[corr & l1].index
             df = df.drop(to_remove)
-            df_2_remaining_features = set(df["feature_id"])
-            assert df_2_orig_features == df_2_remaining_features, (df_2_orig_features, df_2_remaining_features)
+            df_remaining_features = set(df["feature_id"])
+            assert df_orig_features == df_remaining_features, (df_orig_features, df_remaining_features)
             assert df["spectype"].isna().all()
             del df["spectype"]
         if("file_name" in df.columns):
@@ -32,7 +32,7 @@ class Mgf:
         max_repetitions = df.groupby("feature_id").nunique().max()
         assert max_repetitions.max() == 1
         df = df.drop_duplicates()
-        df_2_remaining_features = set(df["feature_id"])
-        assert df_2_orig_features == df_2_remaining_features
+        df_remaining_features = set(df["feature_id"])
+        assert df_orig_features == df_remaining_features
         assert (df["feature_id"] == df["scans"]).all()
         self.df = df.set_index("feature_id").drop(columns=["scans"]).rename(columns={"charge": "Charge", "ms_level": "MS level"})
