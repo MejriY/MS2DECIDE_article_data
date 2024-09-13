@@ -71,13 +71,12 @@ def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
     compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
     to_emph = {k: "\\emph{" + str(k) + "}" for k in range(91, 97)}
+    new_names = compounds.apply(lambda x: x["Chemical name"] if(x["Reported"]) else "", axis=1).rename("Chemical name reported")
     by_k = (
         compounds.sort_values(by = ["Rank min K", "Id"])
-        .loc[:, ["cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]]
+        .loc[:, ["Chemical name", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]].assign(**{"Chemical name reported": new_names})
         .rename(index=to_emph)
     )
-    # inchis = compounds.columns[compounds.columns.map(lambda s: "InChI" in s)]
-    # compounds.drop(columns=inchis).rename(columns=lambda x: x.replace(" ", "")).replace(
     compounds.rename(columns=lambda x: x.replace(" ", "").replace("-", "").replace("/", "")).replace(
         {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
     ).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
