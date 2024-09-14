@@ -61,8 +61,8 @@ def generate_summary():
     compounds.prefix_semantic_ids()
     compounds_joined = compounds.df.reset_index().set_index("Semantic id")
 
-    adducts_df = pd.read_csv(INPUT_DIR / "Adducts.tsv", sep="\t").set_index("Semantic id")
-    compounds_joined = compounds_joined.join(adducts_df).rename({"Adduct": "Adduct manual"}, axis=1)
+    descriptors_df = pd.read_csv(INPUT_DIR / "Descriptors.tsv", sep="\t").set_index("Semantic id").rename({"Adduct": "Adduct manual"}, axis=1)
+    compounds_joined = compounds_joined.join(descriptors_df)
     
     compounds_joined.to_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t")
 
