@@ -96,7 +96,7 @@ def generate_article_data():
     by_k = (
         compounds.sort_values(by = ["Rank min K", "Precursor m/z", "Retention time (seconds)"]))
     by_k.insert(0, "Adduct", adduct_series)
-    by_k = by_k.loc[:, ["Semantic id", "Adduct", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K"]]
+    by_k = by_k.loc[:, ["Semantic id", "Adduct", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K", "Type of node", "Comments"]]
     by_k.rename(columns=lambda x: x.replace(" ", "")).replace({"{": "", "}": "", "'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
     
     compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
