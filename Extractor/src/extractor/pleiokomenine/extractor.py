@@ -28,7 +28,7 @@ def transform_coordinates_file(input_file, output_file):
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
     shutil.copytree(GENERATED_DIR_CARTESIAN, GENERATED_DIR_ARTICLE, dirs_exist_ok=True)
-    conf_input = INPUT_DIR / "Boltzmann analysis/" / "Conformational population.tsv"
-    pd.read_csv(conf_input, sep="\t").set_index("Conformation").rename(columns=lambda x: re.sub('[ ()/]', '', x)).to_csv(GENERATED_DIR_ARTICLE / "Conformationalpopulation.tsv", sep="\t")
-    shutil.copy(INPUT_DIR / "Boltzmann analysis/" / "Eight conformations.tsv", GENERATED_DIR_ARTICLE / "Eightconformations.tsv")
+    pd.read_csv(INPUT_DIR / "Boltzmann analysis/" / "Conformational population.tsv", sep="\t").set_index("Conformation").rename(columns=lambda x: re.sub('[ ()/]', '', x)).to_csv(GENERATED_DIR_ARTICLE / "Conformationalpopulation.tsv", sep="\t")
+    pd.read_csv(INPUT_DIR / "Boltzmann analysis/" / "Eight conformations.tsv", sep="\t").set_index("Conformation").rename(columns=lambda x: re.sub('[ ()/]', '', x)).to_csv(GENERATED_DIR_ARTICLE / "Eightconformations.tsv", sep="\t")
+    pd.read_excel(INPUT_DIR / "MLJDP4/" / "Results_ML_J_DP4.xlsx", sheet_name="Shifts").rename(columns=lambda x: re.sub('[ ()/]', '', x)).rename(columns={"Isomer1": "Isomerone", "Isomer2": "Isomertwo"}).to_csv(GENERATED_DIR_ARTICLE / "MLJDP4Shifts.tsv", sep="\t")
 
