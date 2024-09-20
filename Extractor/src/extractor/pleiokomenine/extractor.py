@@ -27,4 +27,7 @@ def transform_coordinates_file(input_file, output_file):
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
     shutil.copytree(GENERATED_DIR_CARTESIAN, GENERATED_DIR_ARTICLE, dirs_exist_ok=True)
+    conf_input = INPUT_DIR / "Boltzmann analysis/" / "Conformational population.tsv"
+    pd.read_csv(conf_input, sep="\t").rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Conformationalpopulation.tsv", sep="\t")
+    shutil.copy(INPUT_DIR / "Boltzmann analysis/" / "Eight conformations.tsv", GENERATED_DIR_ARTICLE / "Eightconformations.tsv")
 
