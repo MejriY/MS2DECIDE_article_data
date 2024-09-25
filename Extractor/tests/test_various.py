@@ -289,3 +289,30 @@ def test_export_rtinseconds_manual_fails():
         "100.251302248751 159.445 "
     ]
     output_path.unlink(missing_ok=True)
+
+def test_export_thresholded():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (spectrum, ) = spectras
+    assert spectrum.metadata_dict()["precursor_mz"] == 222.1597604
+    assert spectrum.mz.size == 809
+    mzs = spectrum.mz
+    kept = mzs <= 225
+    spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], spectrum.metadata, metadata_harmonization=False)
+    assert spectrum_copy.mz.size == 715
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([spectrum_copy], str(output_path), export_style="matchms", append=False)
+    first_lines = output_path.read_text().splitlines()[:5]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1+",
+        "RETENTION_TIME=92.382",
+        "PRECURSOR_MZ=222.1597604",
+        "100.251302248751 159.445 "
+    ]
+    spectras = matchms.importing.load_from_mgf(str(output_path))
+    (spectrum, ) = spectras
+    assert spectrum.metadata_dict()["precursor_mz"] == 222.1597604
+    assert spectrum.mz.size == 715
+    output_path.unlink(missing_ok=True)

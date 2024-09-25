@@ -49,7 +49,26 @@ class MgfFiles:
             all_spectra.append(spectrum)
         return all_spectra
     
+    @cache
+    def all_spectra_cut(self):
+        all_spectra = list()
+        by_id = self._by_name.reset_index().set_index("Id")
+        for id in by_id.index:
+            name = by_id.loc[id, "Chemical name"]
+            spectrum = self.from_name(name)
+            spectrum.set("scans", id)
+            mzs = spectrum.mz
+            kept = mzs <= (spectrum.metadata_dict()["precursor_mz"] + 4)
+            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], spectrum.metadata, metadata_harmonization=False)
+            assert spectrum_copy.mz.size <= spectrum.mz.size
+            all_spectra.append(spectrum_copy)
+        return all_spectra
+    
     def export_all_spectra(self, path, export_style = "matchms"):
         # Delete file first as matchms appends to it.
         path.unlink(missing_ok=True)
         matchms.exporting.save_as_mgf(self.all_spectra(), str(path), export_style=export_style)
+    
+    def export_all_spectra_cut(self, path, export_style = "matchms"):
+        path.unlink(missing_ok=True)
+        matchms.exporting.save_as_mgf(self.all_spectra_cut(), str(path), export_style=export_style)
