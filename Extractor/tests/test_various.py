@@ -17,6 +17,7 @@ from rdkit import Chem
 from rdkit import RDLogger
 import re
 import matchms
+import tempfile
 
 def test_read_df_manual():
     json_file = "tests/resources/26a5cbca3e844cc0b126f992c69df832.json"
@@ -133,3 +134,158 @@ def test_pepmass_digits():
     mgf = Mgf(input_path)
     print(mgf.df.columns)
     assert mgf.df.loc[39, "precursor_mz"] == 141.104
+
+def test_export_matchms():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (s, ) = spectras
+    assert s.metadata_dict()["precursor_mz"] == 222.1597604
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([s], str(output_path), export_style="matchms", append=False)
+    first_lines = output_path.read_text().splitlines()[:5]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1+",
+        "RETENTION_TIME=92.382",
+        "PRECURSOR_MZ=222.1597604",
+        "100.251302248751 159.445 "
+    ]
+
+def test_export_gnps():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (s, ) = spectras
+    assert s.metadata_dict()["precursor_mz"] == 222.1597604
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([s], str(output_path), export_style="gnps", append=False)
+    first_lines = output_path.read_text().splitlines()[:4]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1",
+        "PEPMASS=222.1597604",
+        "100.251302248751 159.445 "
+    ]
+
+def test_export_ploum():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (s, ) = spectras
+    assert s.metadata_dict()["precursor_mz"] == 222.1597604
+    s.set("ploum", "ploum42")
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([s], str(output_path), export_style="matchms", append=False)
+    first_lines = output_path.read_text().splitlines()[:6]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1+",
+        "RETENTION_TIME=92.382",
+        "PRECURSOR_MZ=222.1597604",
+        "PLOUM=ploum42",
+        "100.251302248751 159.445 "
+    ]
+
+def test_export_scans():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (s, ) = spectras
+    assert s.metadata_dict()["precursor_mz"] == 222.1597604
+    s.set("scans", "ploum42")
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([s], str(output_path), export_style="matchms", append=False)
+    first_lines = output_path.read_text().splitlines()[:6]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1+",
+        "RETENTION_TIME=92.382",
+        "PRECURSOR_MZ=222.1597604",
+        "SCANS=ploum42",
+        "100.251302248751 159.445 "
+    ]
+
+def test_export_mslevel():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (s, ) = spectras
+    assert s.metadata_dict()["precursor_mz"] == 222.1597604
+    s.set("mslevel", "ploum42")
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([s], str(output_path), export_style="matchms", append=False)
+    first_lines = output_path.read_text().splitlines()[:6]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1+",
+        "RETENTION_TIME=92.382",
+        "PRECURSOR_MZ=222.1597604",
+        "MS_LEVEL=ploum42",
+        "100.251302248751 159.445 "
+    ]
+
+def test_export_rtinseconds_fails():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (s, ) = spectras
+    assert s.metadata_dict()["precursor_mz"] == 222.1597604
+    with pytest.raises(ValueError) as e_info:
+        s.set("rtinseconds", "ploum42")
+    with pytest.raises(ValueError) as e_info:
+        s.set("RTINSECONDS", "ploum42")
+    with pytest.raises(ValueError) as e_info:
+        s.set("rtinseconds", "92")
+    with pytest.raises(ValueError) as e_info:
+        s.set("rtinseconds", 92)
+    with pytest.raises(ValueError) as e_info:
+        s.set("RTINSECONDS", "92")
+    with pytest.raises(ValueError) as e_info:
+        s.set("RTINSECONDS", 92)
+
+def test_export_manual():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (spectrum, ) = spectras
+    assert spectrum.metadata_dict()["precursor_mz"] == 222.1597604
+    metadata_copy = matchms.Metadata(spectrum.metadata_dict(), matchms_key_style=False)
+    metadata_expanded = metadata_copy.set("ploum", "ploum42")
+    assert metadata_expanded.data.keys() == {"charge", "retention_time", "precursor_mz", "ploum"}
+    spectrum_copy = matchms.Spectrum(spectrum.mz, spectrum.intensities, metadata_expanded.data, metadata_harmonization=False)
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([spectrum_copy], str(output_path), export_style="matchms", append=False)
+    first_lines = output_path.read_text().splitlines()[:6]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1+",
+        "RETENTION_TIME=92.382",
+        "PRECURSOR_MZ=222.1597604",
+        "PLOUM=ploum42",
+        "100.251302248751 159.445 "
+    ]
+    output_path.unlink(missing_ok=True)
+
+def test_export_rtinseconds_manual_fails():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (spectrum, ) = spectras
+    assert spectrum.metadata_dict()["precursor_mz"] == 222.1597604
+    metadata_copy = matchms.Metadata(spectrum.metadata_dict(), matchms_key_style=False)
+    # A warning occurs.
+    metadata_expanded = metadata_copy.set("rtinseconds", 42)
+    assert metadata_expanded.data.keys() == {"charge", "retention_time", "precursor_mz", "rtinseconds"}
+    spectrum_copy = matchms.Spectrum(spectrum.mz, spectrum.intensities, metadata_expanded.data, metadata_harmonization=False)
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([spectrum_copy], str(output_path), export_style="matchms", append=False)
+    first_lines = output_path.read_text().splitlines()[:5]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1+",
+        "RETENTION_TIME=92.382",
+        "PRECURSOR_MZ=222.1597604",
+        "100.251302248751 159.445 "
+    ]
+    output_path.unlink(missing_ok=True)
