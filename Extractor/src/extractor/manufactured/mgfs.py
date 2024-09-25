@@ -49,7 +49,32 @@ class MgfFiles:
             all_spectra.append(spectrum)
         return all_spectra
     
+    @cache
+    def all_spectra_sirius(self):
+        all_spectra = list()
+        by_id = self._by_name.reset_index().set_index("Id")
+        for id in by_id.index:
+            name = by_id.loc[id, "Chemical name"]
+            spectrum = self.from_name(name)
+            spectrum.set("scans", id)
+            # No apparent effect when exported; seems that we need to build the spectrum using Spectrum(mz=sp.peaks.mz,intensities=sp.peaks.intensities,metadata=m).
+            matchms.Spectrum()
+            spectrum.set("MSLEVEL", 2)
+            print(spectrum.metadata)
+            metadata_copy = matchms.Metadata(spectrum.metadata_dict(), False)
+            metadata_expanded = metadata_copy.set("RTINSECONDS2", 3)
+            spectrum_copy = matchms.Spectrum(spectrum.mz, spectrum.intensities, metadata_expanded.data, False)
+            print(metadata_expanded.data)
+            print(spectrum_copy.metadata)
+            all_spectra.append(spectrum)
+        return all_spectra
+    
     def export_all_spectra(self, path, export_style = "matchms"):
         # Delete file first as matchms appends to it.
         path.unlink(missing_ok=True)
         matchms.exporting.save_as_mgf(self.all_spectra(), str(path), export_style=export_style)
+
+    def export_all_spectra_sirius(self, path):
+        # Delete file first as matchms appends to it.
+        path.unlink(missing_ok=True)
+        matchms.exporting.save_spectra(self.all_spectra_sirius(), str(path), export_style="matchms", append=False)
