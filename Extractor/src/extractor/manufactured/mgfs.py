@@ -57,6 +57,8 @@ class MgfFiles:
             name = by_id.loc[id, "Chemical name"]
             spectrum = self.from_name(name)
             spectrum.set("scans", id)
+            spectrum.set("MSLEVEL", 2)
+            spectrum.set("COLLISION_ENERGY", 0)
             mzs = spectrum.mz
             kept = mzs <= (spectrum.metadata_dict()["precursor_mz"] + 4)
             spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], spectrum.metadata, metadata_harmonization=False)
@@ -69,6 +71,6 @@ class MgfFiles:
         path.unlink(missing_ok=True)
         matchms.exporting.save_as_mgf(self.all_spectra(), str(path), export_style=export_style)
     
-    def export_all_spectra_cut(self, path, export_style = "matchms"):
+    def export_all_spectra_cut(self, path):
         path.unlink(missing_ok=True)
-        matchms.exporting.save_as_mgf(self.all_spectra_cut(), str(path), export_style=export_style)
+        matchms.exporting.save_as_mgf(self.all_spectra_cut(), str(path))
