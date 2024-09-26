@@ -267,6 +267,27 @@ def test_export_manual():
     ]
     output_path.unlink(missing_ok=True)
 
+def test_export_manual_gnps_fails():
+    input_path = Path("tests/resources/Alchorneine.mgf")
+    output_path = Path("out.mgf")
+    spectras = matchms.importing.load_from_mgf(str(input_path))
+    (spectrum, ) = spectras
+    assert spectrum.metadata_dict()["precursor_mz"] == 222.1597604
+    metadata_copy = matchms.Metadata(spectrum.metadata_dict(), matchms_key_style=False)
+    metadata_expanded = metadata_copy.set("ploum", "ploum42")
+    assert metadata_expanded.data.keys() == {"charge", "retention_time", "precursor_mz", "ploum"}
+    spectrum_copy = matchms.Spectrum(spectrum.mz, spectrum.intensities, metadata_expanded.data, metadata_harmonization=False)
+    output_path.unlink(missing_ok=True)
+    matchms.exporting.save_spectra([spectrum_copy], str(output_path), export_style="gnps", append=False)
+    first_lines = output_path.read_text().splitlines()[:4]
+    assert first_lines == [
+        "BEGIN IONS",
+        "CHARGE=1",
+        "PEPMASS=222.1597604",
+        "100.251302248751 159.445 "
+    ]
+    output_path.unlink(missing_ok=True)
+
 def test_export_rtinseconds_manual_fails():
     input_path = Path("tests/resources/Alchorneine.mgf")
     output_path = Path("out.mgf")

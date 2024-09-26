@@ -58,7 +58,7 @@ class MgfFiles:
             spectrum = self.from_name(name)
             spectrum.set("scans", id)
             spectrum.set("MSLEVEL", 2)
-            spectrum.set("COLLISION_ENERGY", 0)
+            # spectrum.set("COLLISION_ENERGY", 0)
             mzs = spectrum.mz
             kept = mzs <= (spectrum.metadata_dict()["precursor_mz"] + 4)
             spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], spectrum.metadata, metadata_harmonization=False)
@@ -72,5 +72,8 @@ class MgfFiles:
         matchms.exporting.save_as_mgf(self.all_spectra(), str(path), export_style=export_style)
     
     def export_all_spectra_cut(self, path):
+        # MZmine asks to use MASCOT generic format (https://mzmine.github.io/mzmine_documentation/module_docs/io/data-export.html) and https://www.matrixscience.com/help/data_file_help.html says: CHARGE=2+ (matchms) and PEPMASS (gnps) and RTINSECONDS (neither)…
         path.unlink(missing_ok=True)
         matchms.exporting.save_as_mgf(self.all_spectra_cut(), str(path))
+        patched = path.read_text().replace("PRECURSOR_MZ", "PEPMASS").replace("RETENTION_TIME", "RTINSECONDS")
+        path.write_text(patched)
