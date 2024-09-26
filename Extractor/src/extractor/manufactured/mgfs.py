@@ -75,5 +75,5 @@ class MgfFiles:
         # MZmine asks to use MASCOT generic format (https://mzmine.github.io/mzmine_documentation/module_docs/io/data-export.html) and https://www.matrixscience.com/help/data_file_help.html says: CHARGE=2+ (matchms) and PEPMASS (gnps) and RTINSECONDS (neither)…
         path.unlink(missing_ok=True)
         matchms.exporting.save_as_mgf(self.all_spectra_cut(), str(path))
-        patched = path.read_text().replace("PRECURSOR_MZ", "PEPMASS").replace("RETENTION_TIME", "RTINSECONDS")
+        patched = path.read_text().replace("PRECURSOR_MZ", "PEPMASS").replace("RETENTION_TIME", "RTINSECONDS").replace("MS_LEVEL", "MSLEVEL")
         path.write_text(patched)
