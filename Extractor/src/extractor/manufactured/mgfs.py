@@ -63,15 +63,21 @@ class MgfFiles:
         return matchms.Spectrum(l2.mz[kept], normalized_intensities, l2.metadata, metadata_harmonization=False)
     
     def _level1(spectrum):
+        # bug, but we do not want to do this after all!
         l1 = matchms.Spectrum(spectrum.mz, spectrum.intensities, spectrum.metadata, metadata_harmonization=False)
         mzs = l1.mz
         mz_parent = l1.metadata_dict()["precursor_mz"]
-        kept = mzs >= mz_parent - 0.01
+        filtered = mzs >= mz_parent - 0.01
         l1.set("ms_level", 1)
-        l1.set("num_peaks", sum(kept))
+        l1.set("num_peaks", sum(filtered))
+        max_intensity = max(l1.intensities[filtered], default=0)
+        filtered_2 = l1.intensities <= max_intensity
+        kept = filtered & filtered_2
         kept_intensities = l1.intensities[kept]
-        max_intensity = max(kept_intensities, default=0)
-        normalized_intensities = l1.intensities[kept] / max_intensity * 100
+        normalized_intensities = kept_intensities / max_intensity * 100
+        if len(normalized_intensities) >= 1:
+            first_intensity = normalized_intensities[0]
+            # assert first_intensity == 100, first_intensity
         return matchms.Spectrum(l1.mz[kept], normalized_intensities, l1.metadata, metadata_harmonization=False)
     
     @cache
