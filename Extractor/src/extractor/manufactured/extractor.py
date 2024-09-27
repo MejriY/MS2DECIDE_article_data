@@ -37,12 +37,12 @@ def compute_isdb():
 def generate_sirius_input():
     GENERATED_DIR_SIRIUS.mkdir(parents=True, exist_ok=True)
 
-    mzmine_mgf = MZMINE_DIR / "All MZmine cut Sirius.mgf"
-    mzmine_str = mzmine_mgf.read_text()
+    mzmine_path = MZMINE_DIR / "All MZmine cut Sirius.mgf"
+    mzmine_str = mzmine_path.read_text()
     mzmine_patched_str = mzmine_str.replace("CHARGE=1?", "CHARGE=1+")
-    patched = (GENERATED_DIR_SIRIUS / "MZmine Sirius patched.mgf")
-    patched.write_text(mzmine_patched_str)
-    matchmzmine = matchms.importing.load_from_mgf(str(patched), metadata_harmonization=False)
+    patched_path = GENERATED_DIR_SIRIUS / "MZmine Sirius patched.mgf"
+    patched_path.write_text(mzmine_patched_str)
+    matchmzmine = matchms.importing.load_from_mgf(str(patched_path), metadata_harmonization=False)
     input_spectra = list(matchmzmine)
 
     compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv")
@@ -59,8 +59,9 @@ def generate_sirius_input():
             mzs = spectrum.mz
             pepmass = spectrum.metadata_dict()["pepmass"][0]
             kept = mzs >= pepmass
-            print(kept)
-            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], spectrum.metadata, metadata_harmonization=False)
+            metadata_copy = spectrum.metadata_dict().copy()
+            metadata_copy["num_peaks"] = sum(kept)
+            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], metadata_copy, metadata_harmonization=False)
             assert spectrum_copy.mz.size <= spectrum.mz.size
         else:
             spectrum_copy = spectrum
@@ -68,6 +69,7 @@ def generate_sirius_input():
     
     out = GENERATED_DIR_SIRIUS / "Sirius.mgf"
     MgfFiles.export_sirius(filtered_spectra, out)
+    patched_path.unlink()
 
 def generate_summary():
     RDLogger.DisableLog("rdApp.*")
