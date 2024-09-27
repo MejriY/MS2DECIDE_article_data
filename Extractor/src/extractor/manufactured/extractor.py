@@ -109,7 +109,9 @@ def generate_summary():
 
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
-    compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
+    compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df.replace(
+        {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
+    )
     to_emph = {k: "\\emph{" + str(k) + "}" for k in range(91, 97)}
     new_names = compounds.apply(lambda x: x["Chemical name"] if(x["Reported"]) else "", axis=1).rename("Chemical name reported")
     by_k = (
@@ -117,7 +119,5 @@ def generate_article_data():
         .loc[:, ["Chemical name", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]].assign(**{"Chemical name reported": new_names})
         .rename(index=to_emph)
     )
-    compounds.rename(columns=lambda x: x.replace(" ", "").replace("-", "").replace("/", "")).replace(
-        {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
-    ).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
+    compounds.rename(columns=lambda x: x.replace(" ", "").replace("/", "").replace("-", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
