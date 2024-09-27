@@ -49,6 +49,15 @@ class MgfFiles:
             all_spectra.append(spectrum)
         return all_spectra
     
+    def _level1(spectrum):
+        l1 = matchms.Spectrum(spectrum.mz, spectrum.intensities, spectrum.metadata, metadata_harmonization=False)
+        mzs = l1.mz
+        mz_parent = l1.metadata_dict()["precursor_mz"]
+        kept = mzs >= mz_parent
+        l1.set("ms_level", 1)
+        l1.set("num_peaks", sum(kept))
+        return matchms.Spectrum(l1.mz[kept], l1.intensities[kept], l1.metadata, metadata_harmonization=False)
+    
     @cache
     def all_spectra_cut(self):
         all_spectra = list()
@@ -57,12 +66,16 @@ class MgfFiles:
             name = by_id.loc[id, "Chemical name"]
             spectrum = self.from_name(name)
             spectrum.set("scans", id)
-            spectrum.set("MSLEVEL", 2)
+            spectrum.set("feature_id", id)
+            spectrum.set("ms_level", 2)
             # spectrum.set("COLLISION_ENERGY", 0)
             mzs = spectrum.mz
             kept = mzs <= (spectrum.metadata_dict()["precursor_mz"] + 4)
-            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], spectrum.metadata, metadata_harmonization=False)
+            spectrum.set("num_peaks", sum(kept))
+            max_intensity = max(spectrum.intensities)
+            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept] / max_intensity * 100, spectrum.metadata, metadata_harmonization=False)
             assert spectrum_copy.mz.size <= spectrum.mz.size
+            all_spectra.append(MgfFiles._level1(spectrum_copy))
             all_spectra.append(spectrum_copy)
         return all_spectra
     
