@@ -56,7 +56,10 @@ class MgfFiles:
         kept = mzs >= mz_parent
         l1.set("ms_level", 1)
         l1.set("num_peaks", sum(kept))
-        return matchms.Spectrum(l1.mz[kept], l1.intensities[kept], l1.metadata, metadata_harmonization=False)
+        kept_intensities = l1.intensities[kept]
+        max_intensity = max(kept_intensities, default=0)
+        normalized_intensities = l1.intensities[kept] / max_intensity * 100
+        return matchms.Spectrum(l1.mz[kept], normalized_intensities, l1.metadata, metadata_harmonization=False)
     
     @cache
     def all_spectra_cut(self):
@@ -72,8 +75,10 @@ class MgfFiles:
             mzs = spectrum.mz
             kept = mzs <= (spectrum.metadata_dict()["precursor_mz"] + 4)
             spectrum.set("num_peaks", sum(kept))
-            max_intensity = max(spectrum.intensities)
-            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept] / max_intensity * 100, spectrum.metadata, metadata_harmonization=False)
+            kept_intensities = spectrum.intensities[kept]
+            max_intensity = max(kept_intensities)
+            normalized_intensities = spectrum.intensities[kept] / max_intensity * 100
+            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], normalized_intensities, spectrum.metadata, metadata_harmonization=False)
             assert spectrum_copy.mz.size <= spectrum.mz.size
             all_spectra.append(MgfFiles._level1(spectrum_copy))
             all_spectra.append(spectrum_copy)
