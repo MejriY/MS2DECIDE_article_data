@@ -73,7 +73,11 @@ class MgfFiles:
     
     def export_all_spectra_cut(self, path):
         # MZmine asks to use MASCOT generic format (https://mzmine.github.io/mzmine_documentation/module_docs/io/data-export.html) and https://www.matrixscience.com/help/data_file_help.html says: CHARGE=2+ (matchms) and PEPMASS (gnps) and RTINSECONDS (neither)…
+        spectra = self.all_spectra_cut()
+        MgfFiles.export_sirius(spectra, path)
+
+    def export_sirius(spectra, path):
         path.unlink(missing_ok=True)
-        matchms.exporting.save_as_mgf(self.all_spectra_cut(), str(path))
-        patched = path.read_text().replace("PRECURSOR_MZ", "PEPMASS").replace("RETENTION_TIME", "RTINSECONDS").replace("MS_LEVEL", "MSLEVEL")
+        matchms.exporting.save_as_mgf(spectra, str(path))
+        patched = path.read_text().replace("PRECURSOR_MZ=", "PEPMASS=").replace("RETENTION_TIME=", "RTINSECONDS=").replace("MS_LEVEL=", "MSLEVEL=").replace("NUM_PEAKS=", "Num peaks=")
         path.write_text(patched)
