@@ -53,7 +53,7 @@ class MgfFiles:
         l1 = matchms.Spectrum(spectrum.mz, spectrum.intensities, spectrum.metadata, metadata_harmonization=False)
         mzs = l1.mz
         mz_parent = l1.metadata_dict()["precursor_mz"]
-        kept = mzs >= mz_parent
+        kept = mzs >= mz_parent - 0.01
         l1.set("ms_level", 1)
         l1.set("num_peaks", sum(kept))
         kept_intensities = l1.intensities[kept]
