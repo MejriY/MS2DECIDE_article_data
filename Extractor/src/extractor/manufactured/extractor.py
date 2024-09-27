@@ -34,43 +34,6 @@ def generate_gnps_input():
 def compute_isdb():
     support.compute_isdb(GENERATED_DIR_INPUTS / "All GNPS.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
 
-def generate_sirius_input():
-    GENERATED_DIR_SIRIUS.mkdir(parents=True, exist_ok=True)
-
-    mzmine_path = MZMINE_DIR / "All MZmine cut Sirius.mgf"
-    mzmine_str = mzmine_path.read_text()
-    mzmine_patched_str = mzmine_str.replace("CHARGE=1?", "CHARGE=1+")
-    patched_path = GENERATED_DIR_SIRIUS / "MZmine Sirius patched.mgf"
-    patched_path.write_text(mzmine_patched_str)
-    matchmzmine = matchms.importing.load_from_mgf(str(patched_path), metadata_harmonization=False)
-    input_spectra = list(matchmzmine)
-
-    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv")
-    ids = compounds.df.index
-    input_ids = [s.get("scans") for s in input_spectra]
-    input_ids_floats = [float(i) for i in input_ids]
-    assert set(input_ids_floats) == set(ids.tolist()), f"{set(input_ids_floats) - set(ids.tolist())} {set(ids.tolist()) - set(input_ids)}"
-    assert len(input_spectra) == len(ids) * 2
-    
-    filtered_spectra = list()
-    for spectrum in input_spectra:
-        mslevel = float(spectrum.metadata_dict()["ms_level"])
-        if(mslevel == 1):
-            mzs = spectrum.mz
-            pepmass = spectrum.metadata_dict()["pepmass"][0]
-            kept = mzs >= pepmass
-            metadata_copy = spectrum.metadata_dict().copy()
-            metadata_copy["num_peaks"] = sum(kept)
-            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], spectrum.intensities[kept], metadata_copy, metadata_harmonization=False)
-            assert spectrum_copy.mz.size <= spectrum.mz.size
-        else:
-            spectrum_copy = spectrum
-        filtered_spectra.append(spectrum_copy)
-    
-    out = GENERATED_DIR_SIRIUS / "Sirius.mgf"
-    MgfFiles.export_sirius(filtered_spectra, out)
-    patched_path.unlink()
-
 def generate_summary():
     RDLogger.DisableLog("rdApp.*")
 

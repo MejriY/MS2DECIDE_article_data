@@ -11,5 +11,4 @@ GENERATED_DIR_ARTICLE = REPO_DIR / "../" / "Article/" / "Generated/" / "Manufact
 INPUT_DIR = REPO_DIR / "Manufactured case/"
 INPUT_DIR_GNPS_TASKS = INPUT_DIR / "GNPS Tasks/"
 # SIRIUS_DIR = INPUT_DIR / "Sirius_outputs_Mehdi_tophits/"
-MZMINE_DIR = INPUT_DIR / "MZmine/"
 SIRIUS_DIR = INPUT_DIR / "Sirius/"
