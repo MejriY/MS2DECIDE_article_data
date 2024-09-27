@@ -49,6 +49,19 @@ class MgfFiles:
             all_spectra.append(spectrum)
         return all_spectra
     
+    def _level2(spectrum):
+        l2 = matchms.Spectrum(spectrum.mz, spectrum.intensities, spectrum.metadata, metadata_harmonization=False)
+        l2.set("ms_level", 2)
+        # l2.set("COLLISION_ENERGY", 0)
+        mzs = l2.mz
+        mz_parent = l2.metadata_dict()["precursor_mz"]
+        kept = mzs <= (mz_parent + 4)
+        l2.set("num_peaks", sum(kept))
+        kept_intensities = l2.intensities[kept]
+        max_intensity = max(kept_intensities)
+        normalized_intensities = l2.intensities[kept] / max_intensity * 100
+        return matchms.Spectrum(l2.mz[kept], normalized_intensities, l2.metadata, metadata_harmonization=False)
+    
     def _level1(spectrum):
         l1 = matchms.Spectrum(spectrum.mz, spectrum.intensities, spectrum.metadata, metadata_harmonization=False)
         mzs = l1.mz
@@ -70,15 +83,7 @@ class MgfFiles:
             spectrum = self.from_name(name)
             spectrum.set("scans", id)
             spectrum.set("feature_id", id)
-            spectrum.set("ms_level", 2)
-            # spectrum.set("COLLISION_ENERGY", 0)
-            mzs = spectrum.mz
-            kept = mzs <= (spectrum.metadata_dict()["precursor_mz"] + 4)
-            spectrum.set("num_peaks", sum(kept))
-            kept_intensities = spectrum.intensities[kept]
-            max_intensity = max(kept_intensities)
-            normalized_intensities = spectrum.intensities[kept] / max_intensity * 100
-            spectrum_copy = matchms.Spectrum(spectrum.mz[kept], normalized_intensities, spectrum.metadata, metadata_harmonization=False)
+            spectrum_copy = MgfFiles._level2(spectrum)
             assert spectrum_copy.mz.size <= spectrum.mz.size
             all_spectra.append(MgfFiles._level1(spectrum_copy))
             all_spectra.append(spectrum_copy)
@@ -88,6 +93,20 @@ class MgfFiles:
         # Delete file first as matchms appends to it.
         path.unlink(missing_ok=True)
         matchms.exporting.save_as_mgf(self.all_spectra(), str(path), export_style=export_style)
+    
+    def export_each_spectra_cut(self, dir):
+        dir.mkdir(parents=True, exist_ok=True)
+        by_id = self._by_name.reset_index().set_index("Id")
+        for id in by_id.index:
+            name = by_id.loc[id, "Chemical name"]
+            spectrum = self.from_name(name)
+            spectrum.set("scans", id)
+            spectrum.set("feature_id", id)
+            spectrum_l2 = MgfFiles._level2(spectrum)
+            assert spectrum_l2.mz.size <= spectrum.mz.size
+            path = dir / (name + ".mgf")
+            path.unlink(missing_ok=True)
+            matchms.exporting.save_as_mgf([MgfFiles._level1(spectrum_l2), spectrum_l2], str(path))
     
     def export_all_spectra_cut(self, path):
         # MZmine asks to use MASCOT generic format (https://mzmine.github.io/mzmine_documentation/module_docs/io/data-export.html) and https://www.matrixscience.com/help/data_file_help.html says: CHARGE=2+ (matchms) and PEPMASS (gnps) and RTINSECONDS (neither)…
