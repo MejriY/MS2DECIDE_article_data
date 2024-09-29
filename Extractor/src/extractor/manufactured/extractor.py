@@ -25,10 +25,9 @@ def generate_gnps_input():
     mgfs = MgfFiles(INPUT_DIR / "Mgf files/", compounds.df["Chemical name"])
 
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
-    mgfs.export_all_spectra(GENERATED_DIR_INPUTS / "All Matchms.mgf")
-    mgfs.export_all_spectra(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
-    mgfs.export_all_spectra_cut(GENERATED_DIR_INPUTS / "All Sirius.mgf")
-    mgfs.export_each_spectra_cut(GENERATED_DIR / "Sirius/")
+    mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All Matchms.mgf")
+    mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
+    mgfs.export_all_sirius(GENERATED_DIR_INPUTS / "All Sirius.mgf")
 
     compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
 
