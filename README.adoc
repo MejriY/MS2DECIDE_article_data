@@ -2,4 +2,4 @@
 
 Data related to the MS2DECIDE article.
 
-The folder `Generated/` contains files that can be generated from the code in `Extractor/`.
+The folder `Generated/` contains files that can be generated using the code in `Extractor/`.
