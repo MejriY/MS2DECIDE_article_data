@@ -5,7 +5,6 @@ RTINSECONDS=115.85
 PEPMASS=518.34783
 CHARGE=1+
 SPECTYPE=CORRELATED MS
-FILENAME=N-demethylmitiphylline.mzML
 SCANS=61
 Num peaks=4
 518.347832 100
@@ -22,7 +21,6 @@ PEPMASS=518.34783
 CHARGE=1+
 MERGED_SCANS=199914,199577,199240,198888,198551,198214,187612,187275,186938,208111,207774,207437,158575,158238,158912,159264,159601,159938,224508,224171,223834,113814,113477,113140
 MERGED_STATS=24 / 84 (60 removed due to low quality, 0 removed due to low cosine).
-FILENAME=N-demethylmitiphylline.mzML;N-demethylmitiphylline.mzML;N-demethylmitiphylline.mzML;N-demethylmitiphylline.mzML;N-demethylmitiphylline.mzML;N-demethylmitiphylline.mzML
 SCANS=61
 Num peaks=5889
 100.002693 0.018

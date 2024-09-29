@@ -45,7 +45,6 @@ PEPMASS=269.08082
 CHARGE=1+
 MERGED_SCANS=176873,177331,177788,169931,170389,170846,164377,164834,165292
 MERGED_STATS=9 / 9 (0 removed due to low quality, 0 removed due to low cosine).
-FILENAME=Damnacanthol.mzML;Damnacanthol.mzML;Damnacanthol.mzML
 SCANS=26
 Num peaks=8449
 100.037094 0.111

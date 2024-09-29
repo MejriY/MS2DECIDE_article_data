@@ -21,10 +21,21 @@ from zipfile import ZipFile
 import zipfile
 import json
 import extractor.gnps as gnps
+import re
 
 def clean():
     manufextractor.clean()
     pleioextractor.clean()
+
+def remove_filenames():
+    input_dir = mdirs.INPUT_DIR / "Mgf files/"
+    input_paths = set(input_dir.glob("*.mgf"))
+    for input_path in input_paths:
+        content = input_path.read_text()
+        patched = re.sub(r'FILENAME=.*\n', '', content)
+        # output_path = output_dir / (input.stem + ".mgf")
+        output_path = input_path
+        output_path.write_text(patched)
 
 def unreported_ones():
     compounds_manufactured = pd.read_csv(mdirs.GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")

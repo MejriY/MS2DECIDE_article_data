@@ -5,7 +5,6 @@ RTINSECONDS=99.26
 PEPMASS=223.13318
 CHARGE=1+
 SPECTYPE=CORRELATED MS
-FILENAME=Dehydrovomifoliol.mzML
 SCANS=27
 Num peaks=3
 223.133176 100
@@ -21,7 +20,6 @@ PEPMASS=223.13318
 CHARGE=1+
 MERGED_SCANS=138195,137859,137523,135123,134787,134451,117709,117373,117036
 MERGED_STATS=9 / 27 (18 removed due to low quality, 0 removed due to low cosine).
-FILENAME=Dehydrovomifoliol.mzML;Dehydrovomifoliol.mzML;Dehydrovomifoliol.mzML
 SCANS=27
 Num peaks=515
 100.692841 6.478

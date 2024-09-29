@@ -6016,7 +6016,6 @@ PEPMASS=181.04962
 CHARGE=1+
 MERGED_SCANS=83195,83531,83867
 MERGED_STATS=3 / 3 (0 removed due to low quality, 0 removed due to low cosine).
-FILENAME=Caffeic acid.mzML
 SCANS=12
 Num peaks=214
 107.048096 5.612

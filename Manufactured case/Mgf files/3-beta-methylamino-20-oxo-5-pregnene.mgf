@@ -351,7 +351,6 @@ PEPMASS=330.27918
 CHARGE=1+
 MERGED_SCANS=376021,375684,375348,347338,347002,346665,342215,341878,341542,326846,326509,326173,305325,304988,304652,232549,232212,231875,224352,224015,223679,203860,203523,203186,195664,195328,194991,158786,158449,158112,117807,117470,117133
 MERGED_STATS=33 / 129 (96 removed due to low quality, 0 removed due to low cosine).
-FILENAME=3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML;3-beta-MeAmino20-oxo-5-pregnene.mzML
 SCANS=4
 Num peaks=14130
 100.035126 0.03

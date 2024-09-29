@@ -5,7 +5,6 @@ RTINSECONDS=169.69
 PEPMASS=304.30036
 CHARGE=1+
 SPECTYPE=CORRELATED MS
-FILENAME=3-beta-amino-pregnane.mzML
 SCANS=2
 Num peaks=3
 304.30036 100
@@ -21,7 +20,6 @@ PEPMASS=304.30036
 CHARGE=1+
 MERGED_SCANS=308050,307714,307377,305998,305662,305325,220927,220590,220254,315223,314886,314550,327520,327184,326847,339816,339480,339143,348013,347677,347340,360308,359971,359635,372601,372264,371928,380795,380459,380122
 MERGED_STATS=30 / 102 (72 removed due to low quality, 0 removed due to low cosine).
-FILENAME=3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML;3-beta-amino-pregnane.mzML
 SCANS=2
 Num peaks=3129
 100.362251 0.809
