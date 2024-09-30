@@ -37,6 +37,16 @@ def remove_filenames():
         output_path = input_path
         output_path.write_text(patched)
 
+def remove_ids():
+    input_dir = mdirs.INPUT_DIR / "Mgf files/"
+    input_paths = set(input_dir.glob("*.mgf"))
+    for input_path in input_paths:
+        content = input_path.read_text()
+        no_f = re.sub(r'^FEATURE_ID=.*\n', '', content, flags=re.MULTILINE)
+        patched = re.sub(r'^SCANS=.*\n', '', no_f, flags=re.MULTILINE)
+        output_path = input_path
+        output_path.write_text(patched)
+
 def unreported_ones():
     compounds_manufactured = pd.read_csv(mdirs.GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
     return compounds_manufactured[compounds_manufactured["Chemical name"].map(lambda s: s.startswith("Unreported "))]
