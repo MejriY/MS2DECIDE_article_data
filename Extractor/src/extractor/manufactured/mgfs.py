@@ -9,7 +9,7 @@ class MgfFiles:
         self.files = set(dir.glob("*.mgf"))
         self._sp_dicts_dict = {f.stem: self._spectra_dict(f) for f in self.files}
         names = self._sp_dicts_dict.keys()
-        self._by_name = pd.DataFrame({"Id": range(1, len(names) + 1)}, index=names)
+        self._by_name = name_id_df(names)
 
     def _spectra_dict(self, file):
         ss = list(matchms.importing.load_from_mgf(str(file)))
@@ -65,3 +65,8 @@ class MgfFiles:
         matchms.exporting.save_as_mgf(spectra, str(path))
         patched = path.read_text().replace("PRECURSOR_MZ=", "PEPMASS=").replace("RETENTION_TIME=", "RTINSECONDS=").replace("MS_LEVEL=", "MSLEVEL=").replace("NUM_PEAKS=", "Num peaks=")
         path.write_text(patched)
+
+def name_id_df(names):
+    assert len(names) == len(set(names))
+    sorted_names = sorted(names, key=lambda n: (not n.startswith("Unreported "), n))
+    return pd.DataFrame({"Chemical name": sorted_names, "Id": range(1, len(sorted_names) + 1)}).set_index("Chemical name")

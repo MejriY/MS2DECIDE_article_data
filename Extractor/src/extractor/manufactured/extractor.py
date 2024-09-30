@@ -2,6 +2,7 @@ import pandas as pd
 import json
 from extractor.compounds import Compounds
 from extractor.manufactured.mgfs import MgfFiles
+from extractor.manufactured.mgfs import name_id_df
 from shutil import rmtree
 from extractor.manufactured.datadirs import *
 from rdkit import RDLogger
@@ -22,9 +23,8 @@ def generate_gnps_input():
     GENERATED_DIR_INPUTS.mkdir(parents=True, exist_ok=True)
 
     mgfs = MgfFiles(INPUT_DIR / "Mgf files/")
-    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv")
-    name_id_df_2cols = compounds.df["Chemical name"]
-    names = name_id_df_2cols["Chemical name"].to_list()
+    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs.names))
+    names = compounds.df["Chemical name"]
     assert mgfs.names == set(names), set(names) - set(mgfs.names)
 
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.

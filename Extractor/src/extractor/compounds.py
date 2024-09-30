@@ -91,8 +91,9 @@ class Compounds:
         self.df = compounds
     
     @classmethod
-    def from_tsv(cls, compounds_file):
-        return cls(pd.read_csv(compounds_file, sep="\t", dtype={"Id": int}).set_index("Id"))
+    def from_tsv(cls, compounds_file, name_id_df):
+        df = pd.read_csv(compounds_file, sep="\t").join(name_id_df, on = "Chemical name")
+        return cls(df)
     
     def add_precursors(self, precursors):
         self.df["Precursor m/z"] = precursors
