@@ -4,15 +4,12 @@ import pandas as pd
 from functools import cache
 
 class MgfFiles:
-    def __init__(self, dir: Path, name_id_df: pd.DataFrame | pd.Series):
+    def __init__(self, dir: Path):
         self.dir = dir
         self.files = set(dir.glob("*.mgf"))
         self._sp_dicts_dict = {f.stem: self._spectra_dict(f) for f in self.files}
-        name_id_df_2cols = name_id_df.reset_index()
-        assert set(name_id_df_2cols.columns) == {"Chemical name", "Id"}
-        self._by_name = name_id_df_2cols.set_index("Chemical name")
-        names = name_id_df_2cols["Chemical name"].to_list()
-        assert self.names == set(names), set(names) - set(self.names)
+        names = self._sp_dicts_dict.keys()
+        self._by_name = pd.DataFrame({"Id": range(1, len(names) + 1)}, index=names)
 
     def _spectra_dict(self, file):
         ss = list(matchms.importing.load_from_mgf(str(file)))
