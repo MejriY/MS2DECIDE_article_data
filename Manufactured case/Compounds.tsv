@@ -63,7 +63,7 @@ Id	Reported	Chemical name	Chemical class	InChI
 62	1	N-methylcytisine	Quinolizidine alkaloid	InChI=1S/C12H16N2O/c1-13-6-9-5-10(8-13)11-3-2-4-12(15)14(11)7-9/h2-4,9-10H,5-8H2,1H3/t9-,10+/m0/s1
 63	1	N-methylprosopinine	Alkylated piperidine alkaloid	InChI=1S/C19H37NO3/c1-3-17(22)12-10-8-6-4-5-7-9-11-16-13-14-19(23)18(15-21)20(16)2/h16,18-19,21,23H,3-15H2,1-2H3/t16-,18-,19+/m1/s1
 64	1	N-methyltryptamine	Indole alkaloid	InChI=1S/C11H14N2/c1-12-7-6-9-8-13-11-5-3-2-4-10(9)11/h2-5,8,12-13H,6-7H2,1H3
-65	1	Ombellifrone	Coumarine	InChI=1S/C9H6O3/c10-7-3-1-6-2-4-9(11)12-8(6)5-7/h1-5,10H
+65	1	Ombelliferone	Coumarine	InChI=1S/C9H6O3/c10-7-3-1-6-2-4-9(11)12-8(6)5-7/h1-5,10H
 66	1	Onychine	Azafluorenone alkaloid	InChI=1S/C13H9NO/c1-8-6-7-14-12-9-4-2-3-5-10(9)13(15)11(8)12/h2-7H,1H3
 67	1	Oubacryptine	Benzophenanthridine alkaloid	InChI=1S/C22H23NO3/c1-25-21-10-18-16-8-13-4-3-7-23(13)12-20(16)15-6-5-14(24)9-17(15)19(18)11-22(21)26-2/h5-6,9-11,13,24H,3-4,7-8,12H2,1-2H3/t13-/m1/s1
 68	1	Pachypodol	Flavonoid	InChI=1S/C18H16O7/c1-22-10-7-12(20)15-14(8-10)25-17(18(24-3)16(15)21)9-4-5-11(19)13(6-9)23-2/h4-8,19-20H,1-3H3
