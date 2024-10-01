@@ -4,10 +4,10 @@ from ms2decide.AuthMail import AuthMail
 from datetime import datetime
 from pathlib import Path
 import json
-from extractor.manufactured.datadirs import *
+from extractor.manufactured.datadirs import GENERATED_DIR_INPUTS, INPUT_DIR_GNPS_TASKS
 
 def send():
-    GENERATED_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
+    INPUT_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
     
     input_mgf = str((GENERATED_DIR_INPUTS / "All GNPS.mgf").resolve())
     input_quant = str((GENERATED_DIR_INPUTS / "Quantification table.csv").resolve())
@@ -18,5 +18,5 @@ def send():
 
     ids_by_first = {k:[v for kk,v in e.items()] for k,e in d.items()}
     all_ids = [v for d in ids_by_first.values() for v in d]
-    with open(GENERATED_DIR_GNPS_TASKS/"Gnps task ids.json", 'w') as f:
+    with open(INPUT_DIR_GNPS_TASKS/"Gnps task ids.json", 'w') as f:
         f.write(json.dumps(all_ids))
