@@ -24,6 +24,7 @@ def generate_gnps_input():
 
     mgfs = MgfFiles(INPUT_DIR / "Mgf files/")
     compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs.names))
+    assert set(compounds.df.index) == set(range(1, 97)), compounds.df.index
     names = compounds.df["Chemical name"]
     assert mgfs.names == set(names), set(names) - set(mgfs.names)
 

@@ -92,7 +92,7 @@ class Compounds:
     
     @classmethod
     def from_tsv(cls, compounds_file, name_id_df):
-        df = pd.read_csv(compounds_file, sep="\t").join(name_id_df, on = "Chemical name")
+        df = pd.read_csv(compounds_file, sep="\t").join(name_id_df, on = "Chemical name").set_index("Id").sort_index()
         return cls(df)
     
     def add_precursors(self, precursors):
