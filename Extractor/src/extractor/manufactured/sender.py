@@ -15,11 +15,23 @@ def send():
     auth = AuthMail.from_txt("../../../Auth GNPS.txt")
     title = f"Manufactured case {datetime.now().isoformat()}"
     (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
-    # task_ids = invoke_all(auth, gnps_input_mgf, gnps_input_csv, title)
-    task_ids = [invoke(auth, gnps_input_mgf, gnps_input_csv, title, 6, 0.02)]
+    task_ids = invoke_all(auth, gnps_input_mgf, gnps_input_csv, title)
 
     # ids_by_first = {k:[v for kk,v in e.items()] for k,e in d.items()}
     # all_ids = [v for d in ids_by_first.values() for v in d]
+    with open(INPUT_DIR_GNPS_TASKS/"Gnps task ids.json", 'w') as f:
+        f.write(json.dumps(task_ids))
+
+def send_1():
+    INPUT_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
+    
+    input_mgf = str((GENERATED_DIR_INPUTS / "01 GNPS old.mgf").resolve())
+    input_quant = str((GENERATED_DIR_INPUTS / "01 Quantification table.csv").resolve())
+    auth = AuthMail.from_txt("../../../Auth GNPS.txt")
+    title = f"Manufactured case {datetime.now().isoformat()}"
+    (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
+    task_ids = [invoke(auth, gnps_input_mgf, gnps_input_csv, title, 6, 0.02)]
+
     with open(INPUT_DIR_GNPS_TASKS/"Gnps task ids.json", 'w') as f:
         f.write(json.dumps(task_ids))
 
