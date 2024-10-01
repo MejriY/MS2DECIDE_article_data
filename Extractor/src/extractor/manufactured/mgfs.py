@@ -16,6 +16,13 @@ class MgfFiles:
         assert len(ss) == 2
         return {MgfFiles._mslevel(s): s for s in ss}
     
+    def _value(self, name, metadata_key):
+        spectras = self.spectra_from_name(name)
+        values = set([s.get(metadata_key) for s in spectras])
+        assert len(values) == 1, values
+        (value, ) = values
+        return value
+
     def _mslevel(spectrum):
         str_mslevel = spectrum.get("ms_level")
         assert str_mslevel is not None, spectrum.metadata
@@ -23,6 +30,9 @@ class MgfFiles:
     
     def spectra_dict_from_name(self, name):
         return self._sp_dicts_dict.get(name)
+    
+    def spectra_from_name(self, name):
+        return self._sp_dicts_dict.get(name).values()
     
     @property
     def names(self):
@@ -33,12 +43,11 @@ class MgfFiles:
         return self._sp_dicts_dict
     
     def precursors_series(self):
-        return pd.Series({self._by_name.at[n, "Id"]: s.get("precursor_mz") for n, s in self.d.items()})
+        return pd.Series({self._by_name.at[n, "Id"]: self._value(n, "precursor_mz") for n in self.names})
     
     def retentions_seconds_series(self):
-        return pd.Series({self._by_name.at[n, "Id"]: s.get("retention_time") for n, s in self.d.items()})
+        return pd.Series({self._by_name.at[n, "Id"]: self._value(n, "retention_time") for n in self.names})
     
-    @cache
     def all_spectra(self, levels = [1, 2]):
         all_spectra = list()
         by_id = self._by_name.reset_index().set_index("Id")
@@ -47,8 +56,9 @@ class MgfFiles:
             spectrum_dict = self.spectra_dict_from_name(name)
             for level in levels:
                 spectrum = spectrum_dict.get(level)
-                assert spectrum is not None
+                assert spectrum is not None, name
                 spectrum.set("scans", id)
+                spectrum.set("feature_id", id)
                 all_spectra.append(spectrum)
         return all_spectra
     
@@ -68,5 +78,5 @@ class MgfFiles:
 
 def name_id_df(names):
     assert len(names) == len(set(names))
-    sorted_names = sorted(names, key=lambda n: (not n.startswith("Unreported "), n))
+    sorted_names = sorted(names, key=lambda n: (n.startswith("Unreported "), n))
     return pd.DataFrame({"Chemical name": sorted_names, "Id": range(1, len(sorted_names) + 1)}).set_index("Chemical name")
