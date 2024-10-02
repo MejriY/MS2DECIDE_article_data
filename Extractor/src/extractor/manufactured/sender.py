@@ -26,7 +26,8 @@ def send_subsets():
     INPUT_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
     auth = AuthMail.from_txt("../../../Auth GNPS.txt")
     
-    subsets = [[1], list(range(1, 3)), list(range(1, 11)), list(range(1, 41)), list(range(1, 91)), list(range(41, 97))]
+    # subsets = [[1], list(range(1, 3)), list(range(1, 11)), list(range(1, 41)), list(range(1, 91)), list(range(41, 97))]
+    subsets = [list(range(83, 84)), list(range(84, 85))]
     for subset in subsets:
         subset_str = f"{min(subset):02d}-{max(subset):02d}"
         input_mgf = str((GENERATED_DIR_INPUTS / f"{subset_str} GNPS.mgf").resolve())
