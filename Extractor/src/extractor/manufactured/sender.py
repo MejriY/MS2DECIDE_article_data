@@ -22,18 +22,18 @@ def send():
     with open(INPUT_DIR_GNPS_TASKS/"Gnps task ids.json", 'w') as f:
         f.write(json.dumps(task_ids))
 
-def send_1():
+def send_subsets():
     INPUT_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
-    
-    input_mgf = str((GENERATED_DIR_INPUTS / "01 GNPS old.mgf").resolve())
-    input_quant = str((GENERATED_DIR_INPUTS / "01 Quantification table.csv").resolve())
     auth = AuthMail.from_txt("../../../Auth GNPS.txt")
-    title = f"Manufactured case {datetime.now().isoformat()}"
-    (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
-    task_ids = [invoke(auth, gnps_input_mgf, gnps_input_csv, title, 6, 0.02)]
-
-    with open(INPUT_DIR_GNPS_TASKS/"Gnps task ids.json", 'w') as f:
-        f.write(json.dumps(task_ids))
+    
+    subsets = [[1], list(range(1, 3)), list(range(1, 11)), list(range(1, 41)), list(range(1, 91)), list(range(41, 97))]
+    for subset in subsets:
+        subset_str = f"{min(subset):02d}-{max(subset):02d}"
+        input_mgf = str((GENERATED_DIR_INPUTS / f"{subset_str} GNPS.mgf").resolve())
+        input_quant = str((GENERATED_DIR_INPUTS / f"{subset_str} Quantification table.csv").resolve())
+        title = f"Manufactured case {datetime.now().isoformat()} {subset_str}"
+        (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
+        invoke(auth, gnps_input_mgf, gnps_input_csv, title, 6, 0.02)
 
 def invoke_all(auth, path_file_mgf_in_gnps, path_file_quan_in_gnps, job_description):
     task_ids = []

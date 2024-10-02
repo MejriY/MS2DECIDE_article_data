@@ -30,14 +30,17 @@ def generate_gnps_input():
 
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
     mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All Matchms.mgf")
+    
     mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
-    mgfs.export_level2([1], GENERATED_DIR_INPUTS / "01 GNPS.mgf", export_style="gnps")
-    mgfs.export_all_sirius(GENERATED_DIR_INPUTS / "All Sirius.mgf")
-
     compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
-    filtered = compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).loc[[1], :]
-    print(filtered)
-    filtered.to_csv(GENERATED_DIR_INPUTS / "01 Quantification table.csv")
+
+    subsets = [[1], list(range(1, 3)), list(range(1, 11)), list(range(1, 41)), list(range(1, 91)), list(range(41, 97))]
+    for subset in subsets:
+        subset_str = f"{min(subset):02d}-{max(subset):02d}"
+        mgfs.export_level2(subset, GENERATED_DIR_INPUTS / f"{subset_str} GNPS.mgf", export_style="gnps")
+        compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).loc[subset, :].to_csv(GENERATED_DIR_INPUTS / f"{subset_str} Quantification table.csv")
+
+    mgfs.export_all_sirius(GENERATED_DIR_INPUTS / "All Sirius.mgf")
 
 def compute_isdb():
     support.compute_isdb(GENERATED_DIR_INPUTS / "All GNPS.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
