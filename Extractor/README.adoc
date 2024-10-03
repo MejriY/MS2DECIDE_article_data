@@ -2,5 +2,7 @@
 
 Generates data from the files available in this repository, in order to ease processing.
 
+The folder `Generated/` contains files that can be deterministically generated using the code in `Extractor/`.
+
 == Instructions
 Install https://hatch.pypa.io/[hatch], clone this folder, install MS2DECIDE, run `hatch run extractor`.
