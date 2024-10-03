@@ -1,2 +1,2 @@
-row ID;row m/z;row retention time;row ion mobility;row ion mobility unit;row CCS;correlation group ID;annotation network number;best ion;auto MS2 verify;identified by n=;partners;neutral M mass;Tangutorine.mzML Peak area
-84;309.1968621;1.5324167;;;;;;;;;;;1105650.8
+row ID,row m/z,row retention time,row ion mobility,row ion mobility unit,row CCS,correlation group ID,annotation network number,best ion,auto MS2 verify,identified by n=,partners,neutral M mass,Tangutorine.mzML Peak area
+84,309.1968621,1.5324167,,,,,,,,,,,1105650.8
