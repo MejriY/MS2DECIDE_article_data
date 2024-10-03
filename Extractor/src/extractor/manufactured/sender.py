@@ -26,7 +26,7 @@ def send_one():
     INPUT_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
     
     input_mgf = str((INPUT_DIR / "Mgf files/" / "Tangutorine/" / "Tangutorine FBMN.mgf").resolve())
-    input_quant = str((INPUT_DIR / "Mgf files/" / "Tangutorine/" / "Tangutorine FBMN quantification table.csv").resolve())
+    input_quant = str((GENERATED_DIR_INPUTS / "84-84 Quantification table.csv").resolve())
     auth = AuthMail.from_txt("../../../Auth GNPS.txt")
     title = f"Manufactured case {datetime.now().isoformat()}"
     (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
