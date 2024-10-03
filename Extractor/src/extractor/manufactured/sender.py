@@ -5,7 +5,7 @@ from ms2decide.AuthMail import AuthMail
 from datetime import datetime
 from pathlib import Path
 import json
-from extractor.manufactured.datadirs import GENERATED_DIR_INPUTS, INPUT_DIR_GNPS_TASKS
+from extractor.manufactured.datadirs import *
 
 def send():
     INPUT_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
@@ -16,6 +16,21 @@ def send():
     title = f"Manufactured case {datetime.now().isoformat()}"
     (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
     task_ids = invoke_all(auth, gnps_input_mgf, gnps_input_csv, title)
+
+    # ids_by_first = {k:[v for kk,v in e.items()] for k,e in d.items()}
+    # all_ids = [v for d in ids_by_first.values() for v in d]
+    with open(INPUT_DIR_GNPS_TASKS/"Gnps task ids.json", 'w') as f:
+        f.write(json.dumps(task_ids))
+
+def send_one():
+    INPUT_DIR_GNPS_TASKS.mkdir(parents=True, exist_ok=True)
+    
+    input_mgf = str((INPUT_DIR / "Mgf files/" / "Tangutorine/" / "Tangutorine FBMN.mgf").resolve())
+    input_quant = str((INPUT_DIR / "Mgf files/" / "Tangutorine/" / "Tangutorine FBMN quantification table.csv").resolve())
+    auth = AuthMail.from_txt("../../../Auth GNPS.txt")
+    title = f"Manufactured case {datetime.now().isoformat()}"
+    (gnps_input_mgf, gnps_input_csv) = _upload_to_gnps(auth, input_mgf, input_quant, title)
+    task_ids = invoke(auth, gnps_input_mgf, gnps_input_csv, title)
 
     # ids_by_first = {k:[v for kk,v in e.items()] for k,e in d.items()}
     # all_ids = [v for d in ids_by_first.values() for v in d]
@@ -44,7 +59,7 @@ def invoke_all(auth, path_file_mgf_in_gnps, path_file_quan_in_gnps, job_descript
             task_ids.append(task_id)
     return task_ids
 
-def invoke(auth, path_file_mgf_in_gnps, path_file_quan_in_gnps, job_description, peak, mass_diff):
+def invoke(auth, path_file_mgf_in_gnps, path_file_quan_in_gnps, job_description, peak = 6, mass_diff = 0.02):
     invokeParameters = _get_networking_parameters()
     invokeParameters["MIN_MATCHED_PEAKS_SEARCH"] = str(peak)
     invokeParameters["MAX_SHIFT_MASS"] = str(mass_diff)
