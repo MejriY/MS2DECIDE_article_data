@@ -1,7 +1,7 @@
 from pathlib import Path
 
 REPO_DIR = Path("../")
-GENERATED_DIR = REPO_DIR / "Generated/" / "Manufactured case/"
+GENERATED_DIR = REPO_DIR / "Extractor/" / "Generated/" / "Manufactured case/"
 GENERATED_DIR_INPUTS = GENERATED_DIR / "1 - Inputs/"
 GENERATED_DIR_ISDB = GENERATED_DIR / "2 - ISDB-LOTUS/"
 GENERATED_DIR_SIRIUS = GENERATED_DIR / "2 - Sirius/"
