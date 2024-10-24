@@ -22,25 +22,26 @@ def generate_input():
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
     GENERATED_DIR_INPUTS.mkdir(parents=True, exist_ok=True)
 
-    mgfs = MgfFiles(INPUT_DIR / "Mgf files/")
+    mgfs = MgfFiles(INPUT_DIR / "Mgf_Sirius/")
     compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs.names))
+    print(compounds.df)
     assert set(compounds.df.index) == set(range(1, 97)), compounds.df.index
     names = compounds.df["Chemical name"]
     assert mgfs.names == set(names), set(names) - set(mgfs.names)
 
+    mgfs.export_all_sirius(GENERATED_DIR_INPUTS / "All Sirius.mgf")
+
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
-    mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All Matchms.mgf")
+    # mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All Matchms.mgf")
     
     mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
     compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
 
-    subsets = [list(range(83, 84)), list(range(84, 85))]
-    for subset in subsets:
-        subset_str = f"{min(subset):02d}-{max(subset):02d}"
-        mgfs.export_level2(subset, GENERATED_DIR_INPUTS / f"{subset_str} GNPS.mgf", export_style="gnps")
-        compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).loc[subset, :].to_csv(GENERATED_DIR_INPUTS / f"{subset_str} Quantification table.csv")
-
-    mgfs.export_all_sirius(GENERATED_DIR_INPUTS / "All Sirius.mgf")
+    # subsets = [list(range(83, 84)), list(range(84, 85))]
+    # for subset in subsets:
+    #     subset_str = f"{min(subset):02d}-{max(subset):02d}"
+    #     mgfs.export_level2(subset, GENERATED_DIR_INPUTS / f"{subset_str} GNPS.mgf", export_style="gnps")
+    #     compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).loc[subset, :].to_csv(GENERATED_DIR_INPUTS / f"{subset_str} Quantification table.csv")
 
     compounds.df.to_csv(GENERATED_DIR_INPUTS / "Compounds.tsv", sep="\t")
 
