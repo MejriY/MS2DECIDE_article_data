@@ -11,7 +11,7 @@ dependencies = ["rdkit", "matchms", "py4cytoscape", "numpy", "pandas", "openpyxl
 [project.scripts]
 clean = "extractor.support:clean"
 manuf-clean = "extractor.manufactured.extractor:clean"
-manuf-geninput = "extractor.manufactured.extractor:generate_gnps_input"
+manuf-geninput = "extractor.manufactured.extractor:generate_input"
 manuf-send = "extractor.manufactured.sender:send"
 manuf-isdb = "extractor.manufactured.extractor:compute_isdb"
 manuf-gensummary = "extractor.manufactured.extractor:generate_summary"
