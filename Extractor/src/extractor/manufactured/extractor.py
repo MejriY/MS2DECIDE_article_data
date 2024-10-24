@@ -57,16 +57,21 @@ def generate_summary():
 
     GENERATED_DIR_TABLES.mkdir(parents=True, exist_ok=True)
 
-    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv")
-    mgfs = MgfFiles(INPUT_DIR / "Mgf files/", compounds.df["Chemical name"])
+    mgfs_sirius = MgfFiles(INPUT_DIR / "Mgf_Sirius/")
+    mgfs_gnps = MgfFiles(INPUT_DIR / "FBMN/")
+    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs_gnps.names))
     ids = compounds.df.index
-
-    col1 = compounds.df.pop("Reported")
-    compounds.df.insert(1, "Reported", col1)
+    precursors = mgfs_gnps.precursors_series()
+    retentions = mgfs_gnps.retentions_seconds_series()
+    
+    # col1 = compounds.df.pop("Reported")
+    # compounds.df.insert(1, "Reported", col1)
     compounds.add_relative_molecular_weights()
-    compounds.add_precursors(mgfs.precursors_series())
-    compounds.add_retention_times(mgfs.retentions_seconds_series())
-    compounds.add_diffs()
+    compounds.add_precursors(mgfs_gnps.precursors_series(), "GNPS")
+    compounds.add_precursors(mgfs_gnps.precursors_series(), "Sirius")
+    compounds.add_retention_times(retentions)
+    # TODO
+    # compounds.add_diffs()
 
     compounds.join_iterated_queries(INPUT_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_GNPS_TASKS_CACHED)
     compounds.join_sirius_data(SIRIUS_DIR / "structure_identifications.tsv")

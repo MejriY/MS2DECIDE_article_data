@@ -95,8 +95,9 @@ class Compounds:
         df = pd.read_csv(compounds_file, sep="\t").join(name_id_df, on = "Chemical name").set_index("Id").sort_index()
         return cls(df)
     
-    def add_precursors(self, precursors):
-        self.df["Precursor m/z"] = precursors
+    def add_precursors(self, precursors, suffix=""):
+        suffix_spaced = " " + suffix if suffix else ""
+        self.df["Precursor m/z" + suffix_spaced] = precursors
     
     def add_retention_times(self, retention_seconds):
         self.df["Retention time (sec)"] = retention_seconds
