@@ -18,7 +18,7 @@ def clean():
         rmtree(GENERATED_DIR_ARTICLE)
 
 
-def generate_gnps_input():
+def generate_input():
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
     GENERATED_DIR_INPUTS.mkdir(parents=True, exist_ok=True)
 
