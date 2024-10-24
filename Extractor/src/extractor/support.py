@@ -15,7 +15,8 @@ import extractor.manufactured.datadirs as mdirs
 from ms2decide.MgfInstance import MgfInstance
 from ms2decide.IsdbAnnotation import get_cfm_annotation
 import extractor.manufactured.extractor as manufextractor
-import extractor.pleiocarpa.extractor as pleioextractor
+import extractor.pleiocarpa.extractor as pleiocextractor
+import extractor.pleiokomenine.extractor as pleiokextractor
 import pandas as pd
 from zipfile import ZipFile 
 import zipfile
@@ -25,7 +26,8 @@ import re
 
 def clean():
     manufextractor.clean()
-    pleioextractor.clean()
+    pleiocextractor.clean()
+    pleiokextractor.clean()
 
 def remove_filenames():
     input_dir = mdirs.INPUT_DIR / "Mgf files/"

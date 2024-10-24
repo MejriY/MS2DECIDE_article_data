@@ -3,12 +3,20 @@ import os
 import shutil
 import pandas as pd
 import re
+from shutil import rmtree
 
 REPO_DIR = Path("../")
 INPUT_DIR = REPO_DIR / "Pleiokomenine C/"
-GENERATED_DIR = REPO_DIR / "Generated/" / "Pleiokomenine C/"
+GENERATED_DIR = REPO_DIR / "Extractor" / "Generated/" / "Pleiokomenine C/"
 GENERATED_DIR_CARTESIAN = GENERATED_DIR / "Cartesian coordinates/"
 GENERATED_DIR_ARTICLE = REPO_DIR / "../" / "Article/" / "Generated/" / "PleiokomenineC/"
+
+def clean():
+    assert rmtree.avoids_symlink_attacks
+    if GENERATED_DIR.exists():
+        rmtree(GENERATED_DIR)
+    if GENERATED_DIR_ARTICLE.exists():
+        rmtree(GENERATED_DIR_ARTICLE)
 
 def transform_coordinates():
     GENERATED_DIR_CARTESIAN.mkdir(parents=True, exist_ok=True)
