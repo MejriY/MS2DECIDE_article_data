@@ -22,20 +22,24 @@ def generate_input():
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
     GENERATED_DIR_INPUTS.mkdir(parents=True, exist_ok=True)
 
-    mgfs = MgfFiles(INPUT_DIR / "Mgf_Sirius/")
-    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs.names))
-    print(compounds.df)
-    assert set(compounds.df.index) == set(range(1, 97)), compounds.df.index
+    mgfs_sirus = MgfFiles(INPUT_DIR / "Mgf_Sirius/")
+    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs_sirus.names))
+    assert set(compounds.df.index) == set(range(1, 96)), compounds.df.index
     names = compounds.df["Chemical name"]
-    assert mgfs.names == set(names), set(names) - set(mgfs.names)
+    assert mgfs_sirus.names == set(names), set(names) - set(mgfs_sirus.names)
 
-    mgfs.export_all_sirius(GENERATED_DIR_INPUTS / "All Sirius.mgf")
+    mgfs_sirus.export_all_sirius(GENERATED_DIR_INPUTS / "All Sirius.mgf")
+
+    mgfs_gnps = MgfFiles(INPUT_DIR / "FBMN/")
+    compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs_gnps.names))
+    assert set(compounds.df.index) == set(range(1, 96)), compounds.df.index
+    names = compounds.df["Chemical name"]
+    assert mgfs_gnps.names == set(names), set(names) - set(mgfs_gnps.names)
 
     # This exports PRECURSOR_MZ instead of PEPMASS, which apparently GNPS does not like.
-    # mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All Matchms.mgf")
-    
-    mgfs.export_all_level2(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
-    compounds.quantification_table_minutes(mgfs.precursors_series(), mgfs.retentions_seconds_series()).to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
+    # mgfs_gnps.export_all_level2(GENERATED_DIR_INPUTS / "All Matchms.mgf")
+    mgfs_gnps.export_all_level2(GENERATED_DIR_INPUTS / "All GNPS.mgf", export_style="gnps")
+    compounds.quantification_table_minutes(mgfs_gnps.precursors_series(), mgfs_gnps.retentions_seconds_series()).to_csv(GENERATED_DIR_INPUTS / "Quantification table.csv")
 
     # subsets = [list(range(83, 84)), list(range(84, 85))]
     # for subset in subsets:

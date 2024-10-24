@@ -13,7 +13,8 @@ class MgfFiles:
 
     def _spectra_dict(self, file):
         ss = list(matchms.importing.load_from_mgf(str(file)))
-        assert len(ss) == 2
+        assert 1 <= len(ss), file
+        assert len(ss) <= 2
         return {MgfFiles._mslevel(s): s for s in ss}
     
     def _value(self, name, metadata_key):
