@@ -99,15 +99,16 @@ class Compounds:
         suffix_spaced = " " + suffix if suffix else ""
         self.df["Precursor m/z" + suffix_spaced] = precursors
     
-    def add_retention_times(self, retention_seconds):
-        self.df["Retention time (sec)"] = retention_seconds
+    def add_retention_times(self, retention_seconds, suffix=""):
+        suffix_spaced = " " + suffix if suffix else ""
+        self.df["Retention time (sec)" + suffix_spaced] = retention_seconds
     
     def add_relative_molecular_weights(self):
         self.df["Relative molecular weight"] = self.df["InChI"].apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)) if pd.notna(i) else None)
 
     def add_diffs(self):
-        self.df["Precursor m/z − relative molecular weight"] = (
-        self.df["Precursor m/z"] - self.df["Relative molecular weight"]
+        self.df["Precursor m/z GNPS − relative molecular weight"] = (
+        self.df["Precursor m/z GNPS"] - self.df["Relative molecular weight"]
     )
         
     def quantification_table_minutes(self, precursors = None, retention_seconds = None):

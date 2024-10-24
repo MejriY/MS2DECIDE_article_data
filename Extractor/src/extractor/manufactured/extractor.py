@@ -60,18 +60,19 @@ def generate_summary():
     mgfs_sirius = MgfFiles(INPUT_DIR / "Mgf_Sirius/")
     mgfs_gnps = MgfFiles(INPUT_DIR / "FBMN/")
     compounds = Compounds.from_tsv(INPUT_DIR / "Compounds.tsv", name_id_df(mgfs_gnps.names))
-    ids = compounds.df.index
-    precursors = mgfs_gnps.precursors_series()
-    retentions = mgfs_gnps.retentions_seconds_series()
-    
-    # col1 = compounds.df.pop("Reported")
-    # compounds.df.insert(1, "Reported", col1)
+    precursors_gnps = mgfs_gnps.precursors_series().sort_index()
+    retentions_gnps = mgfs_gnps.retentions_seconds_series()
+    precursors_sirius = mgfs_sirius.precursors_series().sort_index()
+    retentions_sirius = mgfs_sirius.retentions_seconds_series()
+    # precursors_sirius_rounded = mgfs_sirius.precursors_series().sort_index().round(4)
+
     compounds.add_relative_molecular_weights()
-    compounds.add_precursors(mgfs_gnps.precursors_series(), "GNPS")
-    compounds.add_precursors(mgfs_gnps.precursors_series(), "Sirius")
-    compounds.add_retention_times(retentions)
+    compounds.add_precursors(precursors_gnps, "GNPS")
+    compounds.add_precursors(precursors_sirius, "Sirius")
+    compounds.add_retention_times(retentions_gnps, "GNPS")
+    compounds.add_retention_times(retentions_sirius, "Sirius")
     # TODO
-    # compounds.add_diffs()
+    compounds.add_diffs()
 
     compounds.join_iterated_queries(INPUT_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_GNPS_TASKS_CACHED)
     compounds.join_sirius_data(SIRIUS_DIR / "structure_identifications.tsv")
