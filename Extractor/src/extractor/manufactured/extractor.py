@@ -50,7 +50,7 @@ def generate_input():
     compounds.df.to_csv(GENERATED_DIR_INPUTS / "Compounds.tsv", sep="\t")
 
 def compute_isdb():
-    support.compute_isdb(GENERATED_DIR_INPUTS / "All GNPS.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
+    support.compute_isdb(GENERATED_DIR_INPUTS / "All GNPS.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", tol=0.002)
 
 def generate_summary():
     RDLogger.DisableLog("rdApp.*")

@@ -103,9 +103,9 @@ def y_manufactured_df(auth_path = PurePath(".")):
         assert content_decoded.startswith("ID\t"), content_decoded
     return pd.read_csv(StringIO(content_decoded), sep="\t").rename(columns={"ID": "Id"}).set_index("Id")
 
-def compute_isdb(input_mgf, output_tsv):
+def compute_isdb(input_mgf, output_tsv, tol):
     mgf = MgfInstance(input_mgf)
-    l = get_cfm_annotation(mgf)
+    l = get_cfm_annotation(mgf, tol=tol)
     inchis = pd.Series({k: m.inchi for (k, m) in l.items()})
     scores = pd.Series({k: m.score for (k, m) in l.items()})
     # Let’s stick to a slightly more reasonable number of significant digits, the file is not stable after export-import
