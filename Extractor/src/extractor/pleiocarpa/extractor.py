@@ -26,7 +26,7 @@ def clean():
         rmtree(GENERATED_DIR_ARTICLE)
 
 def compute_isdb():
-    support.compute_isdb(INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
+    support.compute_isdb(INPUT_DIR / "2 - MZmine" / "Pleiocarpa.mgf", GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv", tol=0.02)
 
 def generate_summary():
     RDLogger.DisableLog("rdApp.*")

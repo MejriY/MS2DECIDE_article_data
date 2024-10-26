@@ -115,7 +115,6 @@ def compute_isdb(input_mgf, output_tsv, tol):
     df.to_csv(output_tsv, sep="\t")
 
 def write_task_ids(d_jobs):
-    # d_jobs={6:{0:'ID=58eca36d72f64f6fb075c5d3e89fb639', 10:'ID=ec27a896571b4d65bafe45b67bd09211'}, 4:{0:'ID=17ad7f8268da4b3381d754714dd54707'}}
     ids_by_first = {k:[v.split("=")[1] for kk,v in e.items()] for k,e in d_jobs.items()}
     all_ids = [v for d in ids_by_first.values() for v in d]
     with open("Gnps task ids.json", 'w') as f:
