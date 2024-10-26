@@ -90,7 +90,7 @@ def generate_article_data():
     # unreported_df = support.unreported_ones()
     # rounded_unreported_masses = unreported_df["Precursor m/z"].map(lambda p: round(p))
 
-    compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df
+    compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
     # compounds["Unreported"] = compounds["Precursor m/z"].map(lambda p: round(p) in rounded_unreported_masses)
     adduct_series = compounds.apply(lambda row: (row["Adduct manual"] if pd.notna(row["Adduct manual"]) else row["Adduct GNPS and Sirius"]), axis=1)
     by_k = (
