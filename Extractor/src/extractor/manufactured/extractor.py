@@ -96,11 +96,11 @@ def generate_summary():
 
 def generate_article_data():
     GENERATED_DIR_ARTICLE.mkdir(parents=True, exist_ok=True)
-    compounds = Compounds.from_tsv(GENERATED_DIR_TABLES / "Compounds joined.tsv").df.replace(
+    compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id").replace(
         {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
     )
-    to_emph = {k: "\\emph{" + str(k) + "}" for k in range(91, 97)}
-    new_names = compounds.apply(lambda x: x["Chemical name"] if(x["Reported"]) else "", axis=1).rename("Chemical name reported")
+    to_emph = {k: "\\emph{" + str(k) + "}" for k in range(90, 96)}
+    new_names = compounds.apply(lambda x: x["Chemical name"] if(not x["Chemical name"].startswith("Unreported ")) else "", axis=1).rename("Chemical name reported")
     by_k = (
         compounds.sort_values(by = ["Rank min K", "Id"])
         .loc[:, ["Chemical name", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K"]].assign(**{"Chemical name reported": new_names})

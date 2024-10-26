@@ -20,7 +20,7 @@ def get_iterated_queries(task_ids_file, dir_tasks_cached):
     return qs
 
 
-def get_tanimotos_by_id(ids, inchis):
+def get_tanimotos_by_id(ids, inchis, score_gnps):
     tanimotos_by_id = {}
     for id in ids:
         inchi_g = inchis.loc[id, "InChI GNPS"]
@@ -38,6 +38,9 @@ def get_tanimotos_by_id(ids, inchis):
         if pd.isna(inchi_g):
             assert tanimotos.tgs == 0
             assert tanimotos.tgi == 0
+            if pd.notna(score_gnps[id]):
+                tanimotos.tgs = 0.7
+                tanimotos.tgi = 0.7
         if pd.isna(inchi_s):
             assert tanimotos.tgs == 0
             assert tanimotos.tsi == 0
@@ -154,7 +157,7 @@ class Compounds:
         self.df["ci"] = self.df["Score ISDB-LOTUS"]
 
         inchis_df = pd.DataFrame(self.df.loc[:, ["Standard InChI GNPS iterated", "InChI Sirius", "InChI ISDB-LOTUS"]].rename(columns={"Standard InChI GNPS iterated": "InChI GNPS"}))
-        tanimotos_by_id = get_tanimotos_by_id(self.df.index, inchis_df)
+        tanimotos_by_id = get_tanimotos_by_id(self.df.index, inchis_df, self.df["Score GNPS iterated discounted"])
         tanimoto_values_by_id = {i: {"tgs": t.tgs, "tgi": t.tgi, "tsi": t.tsi} for (i, t) in tanimotos_by_id.items()}
         tanimotos_df = pd.DataFrame.from_dict(tanimoto_values_by_id, orient="index")
         self.df = self.df.join(tanimotos_df)
