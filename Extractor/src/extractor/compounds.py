@@ -38,8 +38,9 @@ def get_tanimotos_by_id(ids, inchis, score_gnps):
         if pd.isna(inchi_g):
             assert tanimotos.tgs == 0
             assert tanimotos.tgi == 0
-            if pd.notna(score_gnps[id]):
+            if pd.notna(score_gnps[id]) and not pd.isna(inchi_s):
                 tanimotos.tgs = 0.7
+            if pd.notna(score_gnps[id]) and not pd.isna(inchi_i):
                 tanimotos.tgi = 0.7
         if pd.isna(inchi_s):
             assert tanimotos.tgs == 0
