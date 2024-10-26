@@ -127,10 +127,10 @@ class Compounds:
     
     def join_sirius_data(self, sirius_tsv):
         sirius_df = pd.read_csv(sirius_tsv, sep="\t").set_index("mappingFeatureId")
-        sirius_df["Score Sirius"] = sirius_df["ConfidenceScoreExact"].replace({float("-inf"): 0})
+        sirius_df["Score Sirius approximate"] = sirius_df["ConfidenceScoreApproximate"].replace({float("-inf"): 0})
         sirius_df["Adduct Sirius"] = sirius_df["adduct"].map(lambda s: s.replace(" ", ""))
         sirius_df = sirius_df.rename(columns={"InChI": "InChI Sirius"}).loc[
-            :, ["InChI Sirius", "Score Sirius", "Adduct Sirius"]
+            :, ["InChI Sirius", "Score Sirius approximate", "Adduct Sirius"]
         ]
         self.df = self.df.join(sirius_df)
 
@@ -149,7 +149,7 @@ class Compounds:
 
     def join_k_tuples(self):
         self.df["cg"] = self.df["Score GNPS iterated discounted"].fillna(0)
-        self.df["cs"] = self.df["Score Sirius"].fillna(0.5)
+        self.df["cs"] = self.df["Score Sirius approximate"].fillna(0.5)
         assert self.df["Score ISDB-LOTUS"].notna().all()
         self.df["ci"] = self.df["Score ISDB-LOTUS"]
 
@@ -173,7 +173,7 @@ class Compounds:
             "GNPS iterated",
             "Score GNPS iterated discounted",
         )
-        add_ranks_columns(self.df, "Sirius", "Score Sirius")
+        add_ranks_columns(self.df, "Sirius", "Score Sirius approximate")
         add_ranks_columns(
             self.df, "ISDB-LOTUS", "Score ISDB-LOTUS"
         )

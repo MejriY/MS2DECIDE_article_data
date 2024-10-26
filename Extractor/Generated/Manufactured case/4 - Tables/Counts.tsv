@@ -11,12 +11,12 @@ Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 50.0	84
 Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 50.0	85
 Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 100.0	87
 Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 100.0	85
-Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 250.0	0
-Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 250.0	0
-Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 500.0	0
-Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 500.0	0
-Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ inf	0
-Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ inf	0
+Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 250.0	87
+Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 250.0	85
+Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 500.0	87
+Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 500.0	85
+Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ inf	87
+Exact Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ inf	85
 Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 0.02	85
 Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 0.02	85
 Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 0.1	92
@@ -29,12 +29,12 @@ Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 50.0	84
 Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 50.0	85
 Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 100.0	87
 Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 100.0	85
-Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 250.0	0
-Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 250.0	0
-Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 500.0	0
-Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 500.0	0
-Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ inf	0
-Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ inf	0
+Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 250.0	87
+Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 250.0	85
+Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 500.0	87
+Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ 500.0	85
+Analog Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ inf	87
+Exact Standard InChI GNPS; peaks ≥ 5; Δ mass ≤ inf	85
 Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 0.02	87
 Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 0.02	87
 Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 0.1	92
@@ -47,10 +47,10 @@ Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 50.0	85
 Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 50.0	87
 Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 100.0	87
 Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 100.0	87
-Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 250.0	0
-Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 250.0	0
-Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 500.0	0
-Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 500.0	0
-Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ inf	0
-Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ inf	0
-Standard InChI GNPS iterated	93
+Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 250.0	87
+Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 250.0	87
+Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 500.0	87
+Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ 500.0	87
+Analog Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ inf	87
+Exact Standard InChI GNPS; peaks ≥ 4; Δ mass ≤ inf	87
+Standard InChI GNPS iterated	87
