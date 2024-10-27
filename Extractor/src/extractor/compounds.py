@@ -152,19 +152,24 @@ class Compounds:
         self.df = self.df.join(isdb_df)
 
     def join_k_tuples(self):
-        self.df["cg"] = self.df["Score GNPS iterated discounted"].fillna(0)
-        self.df["cs"] = self.df["Score Sirius approximate"].fillna(0.5)
+        self._join_k_tuples("Score GNPS iterated discounted", "Standard InChI GNPS iterated", suffix="")
+        self._join_k_tuples("Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02", "Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 0.02", suffix="without iterated")
+    
+    def _join_k_tuples(self, score_gnps_column_name, inchi_gnps_column_name, suffix):
+        suffix_spaced = " " + suffix if suffix else ""
+        self.df["cg" + suffix_spaced] = self.df[score_gnps_column_name].fillna(0)
+        self.df["cs" + suffix_spaced] = self.df["Score Sirius approximate"].fillna(0.5)
         assert self.df["Score ISDB-LOTUS"].notna().all()
-        self.df["ci"] = self.df["Score ISDB-LOTUS"]
+        self.df["ci" + suffix_spaced] = self.df["Score ISDB-LOTUS"]
 
-        inchis_df = pd.DataFrame(self.df.loc[:, ["Standard InChI GNPS iterated", "InChI Sirius", "InChI ISDB-LOTUS"]].rename(columns={"Standard InChI GNPS iterated": "InChI GNPS"}))
-        tanimotos_by_id = get_tanimotos_by_id(self.df.index, inchis_df, self.df["Score GNPS iterated discounted"])
+        inchis_df = pd.DataFrame(self.df.loc[:, [inchi_gnps_column_name, "InChI Sirius", "InChI ISDB-LOTUS"]].rename(columns={inchi_gnps_column_name: "InChI GNPS"}))
+        tanimotos_by_id = get_tanimotos_by_id(self.df.index, inchis_df, self.df[score_gnps_column_name])
         tanimoto_values_by_id = {i: {"tgs": t.tgs, "tgi": t.tgi, "tsi": t.tsi} for (i, t) in tanimotos_by_id.items()}
         tanimotos_df = pd.DataFrame.from_dict(tanimoto_values_by_id, orient="index")
-        self.df = self.df.join(tanimotos_df)
+        self.df = self.df.join(tanimotos_df, rsuffix=suffix_spaced)
 
         k_df = get_k_series(self.df.index, self.df, tanimotos_by_id)
-        self.df = self.df.join(k_df)
+        self.df = self.df.join(k_df, rsuffix=suffix_spaced)
 
     def add_ranks(self):
         add_ranks_columns(
@@ -182,6 +187,7 @@ class Compounds:
             self.df, "ISDB-LOTUS", "Score ISDB-LOTUS"
         )
         add_ranks_columns(self.df, "K", "K")
+        add_ranks_columns(self.df, "K without iterated", "K without iterated")
 
     def get_counts(self):
         # selected_columns = self.df.columns.map(lambda s: (s.startswith("Standard InChI GNPS; ")) or (s == "Id"))
