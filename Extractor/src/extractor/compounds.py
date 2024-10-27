@@ -58,9 +58,9 @@ def get_k_series(ids, scores_df, tanimotos_by_id):
     k_by_id = {}
     for id in ids:
         similarities = {
-            Tool.GNPS.name: scores_df.loc[id, "cg"],
-            Tool.SIRIUS.name: scores_df.loc[id, "cs"],
-            Tool.ISDB.name: scores_df.loc[id, "ci"],
+            Tool.GNPS.name: scores_df.loc[id, Tool.GNPS.name],
+            Tool.SIRIUS.name: scores_df.loc[id, Tool.SIRIUS.name],
+            Tool.ISDB.name: scores_df.loc[id, Tool.ISDB.name],
         }
         tanimotos = tanimotos_by_id[id]
         k = K(similarities, tanimotos).k()
@@ -168,7 +168,7 @@ class Compounds:
         tanimotos_df = pd.DataFrame.from_dict(tanimoto_values_by_id, orient="index")
         self.df = self.df.join(tanimotos_df, rsuffix=suffix_spaced)
 
-        k_df = get_k_series(self.df.index, self.df, tanimotos_by_id)
+        k_df = get_k_series(self.df.index, self.df.loc[:, ["cg" + suffix_spaced, "cs" + suffix_spaced, "ci" + suffix_spaced]].rename({"cg" + suffix_spaced: Tool.GNPS.name, "cs" + suffix_spaced: Tool.SIRIUS.name, "ci" + suffix_spaced: Tool.ISDB.name}, axis=1), tanimotos_by_id)
         self.df = self.df.join(k_df, rsuffix=suffix_spaced)
 
     def add_ranks(self):
