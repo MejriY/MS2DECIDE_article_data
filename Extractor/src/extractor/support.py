@@ -14,6 +14,7 @@ from github import ContentFile
 import extractor.manufactured.datadirs as mdirs
 from ms2decide.MgfInstance import MgfInstance
 from ms2decide.IsdbAnnotation import get_cfm_annotation
+import extractor.elicitation as elicitation
 import extractor.manufactured.extractor as manufextractor
 import extractor.pleiocarpa.extractor as pleiocextractor
 import extractor.pleiokomenine.extractor as pleiokextractor
@@ -25,6 +26,7 @@ import extractor.gnps as gnps
 import re
 
 def clean():
+    elicitation.clean()
     manufextractor.clean()
     pleiocextractor.clean()
     pleiokextractor.clean()

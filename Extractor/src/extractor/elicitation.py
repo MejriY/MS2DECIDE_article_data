@@ -4,7 +4,14 @@ import pandas as pd
 from ms2decide.Tool import Tool
 from ms2decide.K import K
 from ms2decide.Tanimotos import Tanimotos
+from shutil import rmtree
 
+
+def clean():
+    assert rmtree.avoids_symlink_attacks
+    gen_article_dir = mdirs.REPO_DIR / "../" / "Article/" / "Generated/" / "Elicitation/"
+    if gen_article_dir.exists():
+        rmtree(gen_article_dir)
 
 def generate_article_data():
     gen_article_dir = mdirs.REPO_DIR / "../" / "Article/" / "Generated/" / "Elicitation/"
