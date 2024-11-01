@@ -52,7 +52,7 @@ def generate_summary():
 
     compounds = Compounds(compounds_joined)
 
-    compounds.join_iterated_queries(INPUT_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_TABLES / "Fetched/")
+    compounds.join_iterated_queries(INPUT_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_GNPS_TASKS_CACHED)
     compounds.join_sirius_data(INPUT_DIR_SIRIUS / "structure_identifications.tsv")
     compounds.add_adduct_summary()
     compounds.join_isdb_data(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")

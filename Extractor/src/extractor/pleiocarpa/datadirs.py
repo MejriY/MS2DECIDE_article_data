@@ -4,6 +4,7 @@ REPO_DIR = Path("../")
 
 GENERATED_DIR = REPO_DIR / "Extractor/" / "Generated/" / "Pleiocarpa case/"
 GENERATED_DIR_ISDB = GENERATED_DIR / "6 - ISDB-LOTUS/"
+GENERATED_DIR_GNPS_TASKS_CACHED = GENERATED_DIR / "GNPS cached tasks/"
 GENERATED_DIR_TABLES = GENERATED_DIR / "7 - Tables/"
 
 GENERATED_DIR_ARTICLE = REPO_DIR / "../" / "Article/" / "Generated/" / "Pleiocarpa/"
