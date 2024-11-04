@@ -90,14 +90,17 @@ def generate_article_data():
     # unreported_df = support.unreported_ones()
     # rounded_unreported_masses = unreported_df["Precursor m/z"].map(lambda p: round(p))
 
-    compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id")
+    compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id").replace(
+        {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
+    )
     # compounds["Unreported"] = compounds["Precursor m/z"].map(lambda p: round(p) in rounded_unreported_masses)
     adduct_series = compounds.apply(lambda row: (row["Adduct manual"] if pd.notna(row["Adduct manual"]) else row["Adduct GNPS and Sirius"]), axis=1)
     by_k = (
         compounds.sort_values(by = ["Rank min K", "Precursor m/z", "Retention time (seconds)"]))
     by_k.insert(0, "Adduct", adduct_series)
     by_k = by_k.loc[:, ["Semantic id", "Adduct", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Ranks K", "Type of node", "Comments"]]
-    by_k.rename(columns=lambda x: x.replace(" ", "")).replace({"{": "", "}": "", "'": ""}, regex=True).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
+    by_k["Adduct"] = by_k["Adduct"].replace({"{": "", "}": "", "'": ""}, regex=True)
+    by_k.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "K.tsv", sep="\t")
     
     compounds.rename(columns=lambda x: x.replace(" ", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
     
