@@ -1,0 +1,3 @@
+[submodule "Extractor/MS2DECIDE"]
+	path = Extractor/MS2DECIDE
+	url = ssh://git@github.com/MejriY/MS2DECIDE.git
