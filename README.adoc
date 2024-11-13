@@ -1,3 +1,31 @@
 = MS2DECIDE article data
 
 Data related to the MS2DECIDE article.
+
+Here is the procedure to generate all our tables and figures which appear in the article (and more).
+
+. Prepare a work directory
+- `mkdir Reproducibility`
+- `cd Reproducibility`
+. Clone this repository
+- `git clone -recurse-submodules \https://github.com/MejriY/MS2DECIDE_article_data/`
+- `cd MS2DECIDE_article_data/Extractor/`
+- Note that this also gives you a copy of the https://github.com/MejriY/MS2DECIDE/[MS2DECIDE] repository at a specific commit (the one used for the article), which ensures exact reproducibility.
+. Install https://hatch.pypa.io/latest/[hatch], required for preparing the right python environment
+. Set up the environment and run a shell in it
+- `hatch shell`
+. Install the local MS2DECIDE clone
+- `pip install MS2DECIDE/` (it says: “Successfully installed ms2decide-0.0.1”)
+. Run the scripts
+- `clean`
+- `manuf-geninput`
+- `manuf-isdb`, type `isdb/` for the directory where the ISDB database will be downloaded (takes a few minutes)
+- `manuf-gensummary`
+- `manuf-genarticle`
+- `pleio-isdb`, type `isdb/` (takes a few minutes)
+- `pleio-gensummary` (takes a few minutes)
+- `pleio-genarticle`
+- `pleiok-transform`
+- `pleiok-genarticle`
+
+These commands modify the `Reproducibility/MS2DECIDE_article_data/Extractor/Generated/` and the `Reproducibility/Article/Generated/` directories. After running them all, you will have there data to inspect our results (see in particular `Reproducibility/MS2DECIDE_article_data//Extractor/Generated/Manufactured case/4 - Tables/Compounds joined.tsv` and `Reproducibility/MS2DECIDE_article_data/Extractor/Generated/Pleiocarpa case/7 - Tables/Compounds joined.tsv`) and the data that we used to generate the tables and figures in the article.
