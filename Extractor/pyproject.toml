@@ -20,6 +20,9 @@ pleio-clean = "extractor.pleiocarpa.extractor:clean"
 pleio-isdb = "extractor.pleiocarpa.extractor:compute_isdb"
 pleio-gensummary = "extractor.pleiocarpa.extractor:generate_summary"
 pleio-genarticle = "extractor.pleiocarpa.extractor:generate_article_data"
+pleiok-transform = "extractor.pleiokomenine.extractor:transform_coordinates"
+pleiok-genarticle = "extractor.pleiokomenine.extractor:generate_article_data"
+elicitation-genarticle = "extractor.elicitation:generate_article_data"
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
