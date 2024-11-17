@@ -91,7 +91,7 @@ def generate_article_data():
     # rounded_unreported_masses = unreported_df["Precursor m/z"].map(lambda p: round(p))
 
     compounds = pd.read_csv(GENERATED_DIR_TABLES / "Compounds joined.tsv", sep="\t").set_index("Id").replace(
-        {"N-demethyl": r"N\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
+        {"N-demethyl": r"N\\Hyphdash{}demethyl", "\\\emph{N}-demethyl": r"\\emph{N}\\Hyphdash{}demethyl", "N-methyl": r"N\\Hyphdash{}methyl"}, regex=True
     )
     # compounds["Unreported"] = compounds["Precursor m/z"].map(lambda p: round(p) in rounded_unreported_masses)
     adduct_series = compounds.apply(lambda row: (row["Adduct manual"] if pd.notna(row["Adduct manual"]) else row["Adduct GNPS and Sirius"]), axis=1)
