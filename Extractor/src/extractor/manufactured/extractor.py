@@ -75,6 +75,7 @@ def generate_summary():
     compounds.add_diffs()
 
     compounds.join_iterated_queries(INPUT_DIR_GNPS_TASKS / "Gnps task ids.json", GENERATED_DIR_GNPS_TASKS_CACHED)
+    compounds.add_gnps_standard()
     compounds.join_sirius_data(SIRIUS_DIR / "structure_identifications.tsv")
     compounds.add_adduct_summary()
     compounds.join_isdb_data(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")

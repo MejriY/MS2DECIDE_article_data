@@ -110,6 +110,9 @@ class Compounds:
     def add_relative_molecular_weights(self):
         self.df["Relative molecular weight"] = self.df["InChI"].apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)) if pd.notna(i) else None)
 
+    def add_gnps_standard(self):
+        self.df["GNPS standard binary novelty indicator"] = self.df["Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02"] < 0.7
+    
     def add_diffs(self):
         self.df["Precursor m/z GNPS − relative molecular weight"] = (
         self.df["Precursor m/z GNPS"] - self.df["Relative molecular weight"]
@@ -185,6 +188,11 @@ class Compounds:
             self.df,
             "GNPS original",
             "Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02",
+        )
+        add_ranks_columns(
+            self.df,
+            "GNPS standard ranking",
+            "GNPS standard binary novelty indicator",
         )
         add_ranks_columns(
             self.df,
