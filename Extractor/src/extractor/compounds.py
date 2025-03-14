@@ -151,6 +151,15 @@ class Compounds:
         )
         self.df = self.df.join(isdb_df)
 
+    def join_fermo(self, fermo_csv):
+        more_df = (
+            pd.read_csv(fermo_csv)
+            .set_index("feature_id")
+            .rename(columns={"novelty_score": "Score FERMO"})
+        )
+        self.df = self.df.join(more_df)
+        self.df["Score compl FERMO"] = 1 - self.df["Score FERMO"]
+
     def join_k_tuples(self):
         self._join_k_tuples("Score GNPS iterated discounted", "Standard InChI GNPS iterated", suffix="")
         self._join_k_tuples("Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02", "Analog Standard InChI GNPS; peaks ≥ 6; Δ mass ≤ 0.02", suffix="without iterated")
@@ -185,6 +194,9 @@ class Compounds:
         add_ranks_columns(self.df, "Sirius", "Score Sirius approximate")
         add_ranks_columns(
             self.df, "ISDB-LOTUS", "Score ISDB-LOTUS"
+        )
+        add_ranks_columns(
+            self.df, "FERMO", "Score compl FERMO"
         )
         add_ranks_columns(self.df, "K", "K")
         add_ranks_columns(self.df, "K without iterated", "K without iterated")

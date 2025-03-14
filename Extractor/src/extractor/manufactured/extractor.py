@@ -78,6 +78,7 @@ def generate_summary():
     compounds.join_sirius_data(SIRIUS_DIR / "structure_identifications.tsv")
     compounds.add_adduct_summary()
     compounds.join_isdb_data(GENERATED_DIR_ISDB / "ISDB-LOTUS annotations.tsv")
+    compounds.join_fermo(INPUT_DIR / "FERMO/" / "novelty_scores.csv")
     compounds.join_k_tuples()
     compounds.add_ranks()
 
