@@ -2,6 +2,7 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 import json
+import numpy as np
 from extractor.gnps import IteratedQueries
 from collections import Counter
 from ms2decide.Tool import Tool
@@ -111,7 +112,7 @@ class Compounds:
         self.df["Relative molecular weight"] = self.df["InChI"].apply(lambda i: Descriptors.MolWt(Chem.inchi.MolFromInchi(i)) if pd.notna(i) else None)
 
     def add_gnps_standard(self):
-        self.df["GNPS standard binary novelty indicator"] = self.df["Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02"] < 0.7
+        self.df["GNPS standard two classes novelty indicator"] = np.where(self.df["Analog Score GNPS; peaks ≥ 6; Δ mass ≤ 0.02"] >= 0.7, 0.7, 0)
     
     def add_diffs(self):
         self.df["Precursor m/z GNPS − relative molecular weight"] = (
@@ -192,7 +193,7 @@ class Compounds:
         add_ranks_columns(
             self.df,
             "GNPS standard ranking",
-            "GNPS standard binary novelty indicator",
+            "GNPS standard two classes novelty indicator",
         )
         add_ranks_columns(
             self.df,
