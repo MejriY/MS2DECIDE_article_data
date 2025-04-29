@@ -105,7 +105,7 @@ def generate_article_data():
     new_names = compounds.apply(lambda x: x["Chemical name"] if(not x["Chemical name"].startswith("Unreported ")) else "", axis=1).rename("Chemical name reported")
     by_k = (
         compounds.sort_values(by = ["Rank min K without iterated", "Id"])
-        .loc[:, ["Chemical name", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K", "cg without iterated", "K without iterated", "Rank K without iterated"]].assign(**{"Chemical name reported": new_names})
+        .loc[:, ["Chemical name", "cg", "cs", "ci", "tgs", "tgi", "tsi", "K", "Rank K", "cg without iterated", "cs without iterated", "ci without iterated", "tgs without iterated", "tgi without iterated", "tsi without iterated", "K without iterated", "Rank K without iterated"]].assign(**{"Chemical name reported": new_names})
         .rename(index=to_emph)
     )
     compounds.rename(columns=lambda x: x.replace(" ", "").replace("/", "").replace("-", "")).to_csv(GENERATED_DIR_ARTICLE / "Compounds.tsv", sep="\t")
